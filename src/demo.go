@@ -1,6 +1,6 @@
 package main
 
-const path = "C:\\Users\\AA\\go\\src\\gostudy\\src"
+const path = "C:"
 
 func main() {
 

@@ -10,11 +10,14 @@ import (
 
 func GetTestData(projectPath string, fileName string, caseIndex int) map[string]interface{} {
 	//path, _ := os.Getwd()
-	byteData, _ := ioutil.ReadFile(projectPath + "/testdata/" + fileName)
-	var jsonData []map[string]interface{}
-	err := json.Unmarshal(byteData, &jsonData)
+	byteData, err := ioutil.ReadFile(projectPath + "/testdata/" + fileName)
 	if err != nil {
 		fmt.Println(err)
+	}
+	var jsonData []map[string]interface{}
+	err1 := json.Unmarshal(byteData, &jsonData)
+	if err1 != nil {
+		fmt.Println(err1)
 	}
 	return jsonData[caseIndex]
 }

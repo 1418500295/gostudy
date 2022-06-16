@@ -13,9 +13,9 @@ import (
 var (
 	//创建计数器
 	wg             = sync.WaitGroup{}
-	num      int64 = 500 //设置并发数量
-	okNum    int64 = 0   //初始化请求成功的数量
-	timeList []int       //响应时间
+	num      int64 = 1000 //设置并发数量
+	okNum    int64 = 0    //初始化请求成功的数量
+	timeList []int        //响应时间
 	channel  = make(chan int64)
 )
 
@@ -72,7 +72,7 @@ func main() {
 	fmt.Printf("平均响应时间是:%.3f 秒 \n", float64(sumRespTime())/float64(num)/1000)
 	fmt.Printf("QPS：%.3f", float64(num)/(float64(sumRespTime())/float64(num)/1000))
 	//确保打包成exe运行后窗口不关闭
-	_, _ = fmt.Scanf("h")
+	//_, _ = fmt.Scanf("h")
 }
 
 func do(num int64) {

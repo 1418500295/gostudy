@@ -5,7 +5,7 @@ import (
 	"gostudy/src/utils"
 )
 
-const path = "C:\\Users\\AA\\go\\src\\gostudy\\src"
+const path = "C:"
 
 func main() {
 	fmt.Println(utils.GetTestData(path, "login.json", 0))

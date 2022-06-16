@@ -1,11 +1,9 @@
 [
   {
+
     "password": "111",
     "safeCode": "121",
     "userName": "admin"
-  },
-  {
-    "age": 12,
-    "name": "asd"
   }
+
 ]

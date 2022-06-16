@@ -101,7 +101,7 @@ func httpSend() {
 		}
 	}()
 	var request Request
-	request.url = "http://192.168.128.156:3333/boss/login"
+	request.url = ""
 	data := make(map[string]interface{})
 	data["userName"] = "admin"
 	data["password"] = "111"

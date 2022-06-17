@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"github.com/kirinlabs/HttpRequest"
 	"github.com/tidwall/gjson"
+	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -13,9 +15,9 @@ import (
 var (
 	//创建计数器
 	wg             = sync.WaitGroup{}
-	num      int64 = 1000 //设置并发数量
-	okNum    int64 = 0    //初始化请求成功的数量
-	timeList []int        //响应时间
+	num      int64 = 10 //设置并发数量
+	okNum    int64 = 0  //初始化请求成功的数量
+	timeList []int      //响应时间
 	channel  = make(chan int64)
 )
 
@@ -56,6 +58,17 @@ func minRespTime() int {
 	return min
 }
 
+func fiftyRespTime() int {
+	sort.Ints(timeList)
+	resSize := 0.5
+	return timeList[int(float64(len(timeList))*resSize)-1]
+}
+func ninetyRespTime() int {
+	sort.Ints(timeList)
+	resSize := 0.9
+	return timeList[int(float64(len(timeList))*resSize)-1]
+}
+
 func main() {
 	//格式化输出时间
 	//start_time := time.Now().Format("2006-01-02 15:04:05")
@@ -67,6 +80,9 @@ func main() {
 	fmt.Println("成功的数量：", okNum)
 	fmt.Printf("失败的数量：%v \n", num-okNum)
 	fmt.Printf("总耗时：%.3f 秒 \n", float64(endTime-startTime)/1000)
+	fmt.Println(timeList)
+	fmt.Println("50%用户响应时间：" + fmt.Sprintf("%.3f", float64(fiftyRespTime())/1000))
+	fmt.Println("90%用户响应时间：" + fmt.Sprintf("%.3f", float64(ninetyRespTime())/1000))
 	fmt.Printf("最大响应时间：%.3f 秒 \n", float64(maxRespTime())/1000)
 	fmt.Printf("最小响应时间：%.3f 秒 \n", float64(minRespTime())/1000)
 	fmt.Printf("平均响应时间是:%.3f 秒 \n", float64(sumRespTime())/float64(num)/1000)
@@ -101,21 +117,18 @@ func httpSend() {
 		}
 	}()
 	var request Request
-	request.url = ""
+	request.url = "http://192.168.128.156:3333/boss/login"
 	data := make(map[string]interface{})
 	data["userName"] = "admin"
 	data["password"] = "111"
 	data["safeCode"] = "121"
-	sTime := time.Now().UnixNano() / 1e6
 	resp, _ := HttpRequest.Post(request.url, data)
 	defer resp.Close()
 	if resp.StatusCode() == 200 {
 		body, _ := resp.Body()
 		fmt.Println(string(body))
-		eTime := time.Now().UnixNano() / 1e6
-		use_time := (eTime - sTime)
-		channel <- use_time
-		//time_list = append(time_list, int(use_time))
+		respTime, _ := strconv.ParseInt(strings.Split(resp.Time(), "m")[0], 10, 64)
+		channel <- respTime
 		jsonData := gjson.Parse(string(body)).Map()
 		if jsonData["code"].Int() == -1 {
 			// 多个goroutine并发读写sum，有并发冲突，最终计算得到的sum值是不准确的

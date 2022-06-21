@@ -13,4 +13,5 @@ func main() {
 	//降序
 	sort.Sort(sort.Reverse(sort.IntSlice(a)))
 	fmt.Println(a)
+
 }

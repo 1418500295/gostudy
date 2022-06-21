@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/kirinlabs/HttpRequest"
 	"github.com/tidwall/gjson"
+	"github.com/valyala/fasthttp"
+	"runtime"
 	"sort"
 	"strconv"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -15,9 +15,9 @@ import (
 var (
 	//创建计数器
 	wg             = sync.WaitGroup{}
-	num      int64 = 100 //设置并发数量
-	okNum    int64 = 0   //初始化请求成功的数量
-	timeList []int       //响应时间
+	num      int64 = 10 //设置并发数量
+	okNum    int64 = 0  //初始化请求成功的数量
+	timeList []int      //响应时间
 	channel  = make(chan int64)
 )
 
@@ -87,6 +87,7 @@ func main() {
 	fmt.Printf("最小响应时间：%.3f 秒 \n", float64(minRespTime())/1000)
 	fmt.Printf("平均响应时间是:%.3f 秒 \n", float64(sumRespTime())/float64(num)/1000)
 	fmt.Printf("QPS：%.3f", float64(num)/(float64(sumRespTime())/float64(num)/1000))
+	runtime.GC()
 	//确保打包成exe运行后窗口不关闭
 	//_, _ = fmt.Scanf("h")
 }
@@ -117,11 +118,11 @@ func httpSend() {
 		}
 	}()
 	var request Request
-
-	data := make(map[string]interface{})
-	data["userName"] = ""
-	data["password"] = ""
-	data["safeCode"] = "121"
+	request.url = "http://192.168.128.156:3333/boss/login"
+	//data := make(map[string]interface{})
+	//data["userName"] = "admin"
+	//data["password"] = "111"
+	//data["safeCode"] = "121"
 	//data := sync.Map{}
 	//data.Store("userName", "admin")
 	//data.Store("password", "111")
@@ -132,22 +133,43 @@ func httpSend() {
 	//if err != nil {
 	//	fmt.Println(err)
 	//}
-	resp, _ := HttpRequest.Post(request.url, data)
-	defer resp.Close()
-	if resp.StatusCode() == 200 {
-		body, _ := resp.Body()
-		fmt.Println(string(body))
-		respTime, _ := strconv.ParseInt(strings.Split(resp.Time(), "m")[0], 10, 64)
-		channel <- respTime
-		jsonData := gjson.Parse(string(body)).Map()
-		if jsonData["code"].Int() == -1 {
-			// 多个goroutine并发读写sum，有并发冲突，最终计算得到的sum值是不准确的
-			// 使用原子操作计算sum，没有并发冲突，最终计算得到sum的值是准确的
-			atomic.AddInt64(&okNum, 1)
-		}
-	} else {
-		panic("请求异常")
+	args := &fasthttp.Args{}
+	args.Add("userName", "admin")
+	args.Add("password", "111")
+	args.Add("safeCode", "121")
+	sTime := time.Now().UnixNano() / 1e6
+	c := &fasthttp.Client{
+		MaxConnsPerHost: 10000,
+		ReadTimeout:     4000 * time.Millisecond,
+		WriteTimeout:    4000 * time.Millisecond,
 	}
+	_, res, err := c.Post(nil, request.url, args)
+	eTime := time.Now().UnixNano() / 1e6
+	channel <- eTime - sTime
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(string(res))
+	if gjson.ParseBytes(res).Map()["code"].Int() == -1 {
+		atomic.AddInt64(&okNum, 1)
+	}
+
+	//resp, _ := HttpRequest.Post(request.url, data)
+	//defer resp.Close()
+	//if resp.StatusCode() == 200 {
+	//	body, _ := resp.Body()
+	//	fmt.Println(string(body))
+	//	respTime, _ := strconv.ParseInt(strings.Split(resp.Time(), "m")[0], 10, 64)
+	//	channel <- respTime
+	//	jsonData := gjson.Parse(string(body)).Map()
+	//	if jsonData["code"].Int() == -1 {
+	//		// 多个goroutine并发读写sum，有并发冲突，最终计算得到的sum值是不准确的
+	//		// 使用原子操作计算sum，没有并发冲突，最终计算得到sum的值是准确的
+	//		atomic.AddInt64(&okNum, 1)
+	//	}
+	//} else {
+	//	panic("请求异常")
+	//}
 	//计数器减一
 	defer wg.Done()
 

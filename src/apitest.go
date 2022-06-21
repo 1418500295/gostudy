@@ -118,11 +118,11 @@ func httpSend() {
 		}
 	}()
 	var request Request
-	request.url = "http://192.168.128.156:3333/boss/login"
+	request.url = "http"
 	//data := make(map[string]interface{})
-	//data["userName"] = "admin"
-	//data["password"] = "111"
-	//data["safeCode"] = "121"
+	//data["userName"] = ""
+	//data["password"] = ""
+	//data["safeCode"] = ""
 	//data := sync.Map{}
 	//data.Store("userName", "admin")
 	//data.Store("password", "111")

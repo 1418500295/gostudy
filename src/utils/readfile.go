@@ -1,23 +1,50 @@
 package utils
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"strings"
 )
 
 func GetTestData(projectPath string, fileName string, caseIndex int) map[string]interface{} {
+	defer func() {
+		err3 := recover()
+		if err3 != nil {
+			fmt.Println(err3)
+		}
+	}()
 	//path, _ := os.Getwd()
-	byteData, err := ioutil.ReadFile(projectPath + "/testdata/" + fileName)
+	//byteData, err := ioutil.ReadFile(projectPath + "/testdata/" + fileName)
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
+	file, err := os.Open(projectPath + "/testdata/" + fileName)
 	if err != nil {
 		fmt.Println(err)
 	}
+	defer file.Close()
+	reader := bufio.NewReader(file)
+	var chunks []byte
+	buf := make([]byte, 1024)
 	var jsonData []map[string]interface{}
-	err1 := json.Unmarshal(byteData, &jsonData)
-	if err1 != nil {
-		fmt.Println(err1)
+	for {
+		n, err2 := reader.Read(buf)
+		//io.EOF表示文件结束的错误
+		if err2 != nil && err2 != io.EOF {
+			panic(err2)
+		}
+		if 0 == n {
+			break
+		}
+		chunks = append(chunks, buf...)
+		err1 := json.Unmarshal(chunks[:n], &jsonData)
+		if err1 != nil {
+			fmt.Println(err1)
+		}
 	}
 	return jsonData[caseIndex]
 }

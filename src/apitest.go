@@ -15,9 +15,9 @@ import (
 var (
 	//创建计数器
 	wg             = sync.WaitGroup{}
-	num      int64 = 10 //设置并发数量
-	okNum    int64 = 0  //初始化请求成功的数量
-	timeList []int      //响应时间
+	num      int64 = 100 //设置并发数量
+	okNum    int64 = 0   //初始化请求成功的数量
+	timeList []int       //响应时间
 	channel  = make(chan int64)
 )
 
@@ -77,12 +77,12 @@ func main() {
 	do(num)
 	endTime := time.Now().UnixNano() / 1e6
 	fmt.Printf("结束时间：%v \n", endTime)
+	fmt.Println("总请求数: ", num)
 	fmt.Println("成功的数量：", okNum)
 	fmt.Printf("失败的数量：%v \n", num-okNum)
 	fmt.Printf("总耗时：%.3f 秒 \n", float64(endTime-startTime)/1000)
-	fmt.Println(timeList)
-	fmt.Println("50%用户响应时间：" + fmt.Sprintf("%.3f", float64(fiftyRespTime())/1000))
-	fmt.Println("90%用户响应时间：" + fmt.Sprintf("%.3f", float64(ninetyRespTime())/1000))
+	fmt.Println("50%用户响应时间：" + fmt.Sprintf("%.3f秒", float64(fiftyRespTime())/1000))
+	fmt.Println("90%用户响应时间：" + fmt.Sprintf("%.3f秒", float64(ninetyRespTime())/1000))
 	fmt.Printf("最大响应时间：%.3f 秒 \n", float64(maxRespTime())/1000)
 	fmt.Printf("最小响应时间：%.3f 秒 \n", float64(minRespTime())/1000)
 	fmt.Printf("平均响应时间是:%.3f 秒 \n", float64(sumRespTime())/float64(num)/1000)
@@ -105,7 +105,7 @@ func do(num int64) {
 	}
 	//主协程阻塞子协程执行完毕
 	wg.Wait()
-
+	defer close(channel)
 }
 
 //发送请求
@@ -118,10 +118,21 @@ func httpSend() {
 	}()
 	var request Request
 	request.url = "http://192.168.128.156:3333/boss/login"
+
 	data := make(map[string]interface{})
 	data["userName"] = "admin"
 	data["password"] = "111"
 	data["safeCode"] = "121"
+	//data := sync.Map{}
+	//data.Store("userName", "admin")
+	//data.Store("password", "111")
+	//data.Store("safeCode", "121")
+	//jsByte, _ := json.Marshal(&data)
+	//var jsonData map[string]interface{}
+	//err := json.Unmarshal(jsByte, &jsonData)
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
 	resp, _ := HttpRequest.Post(request.url, data)
 	defer resp.Close()
 	if resp.StatusCode() == 200 {

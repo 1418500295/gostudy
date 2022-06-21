@@ -1,0 +1,32 @@
+[
+  {
+    "description": "这是一个get请求",
+    "request": {
+      "uri": "/v1/getDemo",
+      "method": "get",
+      "queries": {
+        "name": "daine",
+        "age": "26"
+      }
+    },
+    "response": {
+      "json": {
+        "info": "success",
+        "status": "200"
+      }
+    }
+  },
+  {
+    "description": "这是一个不带参数的get请求",
+    "request": {
+      "uri": "/v1/getDemo1",
+      "method": "get"
+    },
+    "response": {
+      "json": {
+        "info": "success",
+        "status": "200"
+      }
+    }
+  }
+]

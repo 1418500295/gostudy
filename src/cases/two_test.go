@@ -16,9 +16,9 @@ func Test_Two(t *testing.T) {
 	if resp["code"] != -2 {
 		t.Error("失败")
 	}
-	
+
 }
 
 func Test_Three(t *testing.T) {
-	fmt.Println(111)
+	fmt.Println(utils.GetTestData(path, "login.json", 0))
 }

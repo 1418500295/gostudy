@@ -1,11 +1,13 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"gostudy/src/utils"
+)
 
-const path = "C:"
+const path = "C:\\Users\\AA\\go\\src\\gostudy\\src"
 
 func main() {
-	//fmt.Println(utils.GetTestData(path, "login.json", 0))
-	a := "时间都会感受到了"
-	fmt.Println(string([]rune(a)[0:2]))
+	fmt.Println(utils.GetTestData(path, "login.json", 0))
+
 }

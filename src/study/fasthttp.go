@@ -8,7 +8,7 @@ import (
 
 func main() {
 	req := &fasthttp.Request{}
-	req.SetRequestURI("http://192.168.128.156:3333/boss/login")
+	req.SetRequestURI("")
 	data := make(map[string]interface{})
 	data["userName"] = "admin"
 	data["password"] = "111"

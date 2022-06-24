@@ -7,22 +7,30 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
-func GetTestData(projectPath string, fileName string, caseIndex int) map[string]interface{} {
+func filePath() string {
+	path, err := os.Getwd()
+	if err != nil {
+		fmt.Println(err)
+	}
+	return strings.Trim(strings.SplitAfter(path, "gostudy")[0], " ")
+}
+func GetTestData(fileName string, caseIndex int) map[string]interface{} {
 	defer func() {
 		err3 := recover()
 		if err3 != nil {
 			fmt.Println(err3)
 		}
 	}()
-	//path, _ := os.Getwd()
 	//byteData, err := ioutil.ReadFile(projectPath + "/testdata/" + fileName)
 	//if err != nil {
 	//	fmt.Println(err)
 	//}
-	file, err := os.Open(projectPath + "/testdata/" + fileName)
+	file, err := os.Open(filepath.Join(filePath(), "/src/testdata/", fileName))
+
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -49,19 +57,14 @@ func GetTestData(projectPath string, fileName string, caseIndex int) map[string]
 	return jsonData[caseIndex]
 }
 
-func GetApiUrl(projectPath string, urlName string) string {
+func GetApiUrl(urlName string) string {
 	defer func() {
 		err := recover()
 		if err != nil {
 			fmt.Println("捕获到异常: ", err)
 		}
 	}()
-
-	//path, err := os.Getwd()
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
-	files, err1 := os.Open(projectPath + "/host.properties")
+	files, err1 := os.Open(filepath.Join(filePath(), "/src/host.properties"))
 	defer files.Close()
 	if err1 != nil {
 		fmt.Println(err1)

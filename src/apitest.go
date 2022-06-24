@@ -21,9 +21,8 @@ var (
 	channel  = make(chan int64)
 )
 
-type Request struct {
-	url  string
-	data map[string]interface{}
+type Response struct {
+	Resp map[string]gjson.Result `json:"msg"`
 }
 
 //获取时间戳
@@ -117,8 +116,7 @@ func httpSend() {
 			fmt.Println("错误信息: ", err)
 		}
 	}()
-	var request Request
-	request.url = "http://192.168.128.156:3333/boss/login"
+	url := "http://192.168.128.156:3333/boss/login"
 	//data := make(map[string]interface{})
 	//data["userName"] = ""
 	//data["password"] = ""
@@ -143,17 +141,16 @@ func httpSend() {
 		ReadTimeout:     4000 * time.Millisecond,
 		WriteTimeout:    4000 * time.Millisecond,
 	}
-	_, res, err := c.Post(nil, request.url, args)
+	_, res, err := c.Post(nil, url, args)
 	eTime := time.Now().UnixNano() / 1e6
 	channel <- eTime - sTime
 	if err != nil {
 		fmt.Println(err)
 	}
 	fmt.Println(string(res))
-	if gjson.ParseBytes(res).Map()["code"].Int() == -1 {
+	if gjson.ParseBytes(res).Map()["code"].Int() == 0 {
 		atomic.AddInt64(&okNum, 1)
 	}
-
 	//resp, _ := HttpRequest.Post(request.url, data)
 	//defer resp.Close()
 	//if resp.StatusCode() == 200 {

@@ -1,13 +1,8 @@
 package main
 
-import (
-	"fmt"
-	"gostudy/src/utils"
-)
-
-const path = "C:\\Users\\AA\\go\\src\\gostudy\\src"
+import "os/exec"
 
 func main() {
-	fmt.Println(utils.GetTestData(path, "login.json", 0))
-
+	exec.Command("cd ./cases/")
+	exec.Command("go test -v")
 }

@@ -236,14 +236,14 @@
 <div class="pageHeader">
     <span class="projectTitle">go-test-report</span>
     <div class="testStats">
-        <span class="total"><span class="indicator">&boxbox;</span> Total: <strong>3</strong>Duration: <strong>695ms</strong>
-        </span><span class="passed"><span class="indicator">&check;</span> Passed: <strong>3</strong>
+        <span class="total"><span class="indicator">&boxbox;</span> Total: <strong>2</strong>Duration: <strong>32ms</strong>
+        </span><span class="passed"><span class="indicator">&check;</span> Passed: <strong>2</strong>
         </span><span class="skipped"><span class="indicator">&dash;</span> Skipped: <strong>0</strong>
         </span><span class="failed"><span class="indicator">&cross;</span> Failed: <strong>0</strong>
         </span>
     </div>
     <span class="testGroupsTitle">Test Groups:</span>
-    <span class="testExecutionDate">June 14, 2022 10:55:13</span>
+    <span class="testExecutionDate">June 24, 2022 11:38:23</span>
 </div>
 <div class="testReportContainer">
     <div class="cardContainer">
@@ -454,7 +454,7 @@ window.GoTestReport = function (elements) {
 
     
 
-    const data = [{"FailureIndicator":"","SkippedIndicator":"","TestResults":[{"TestName":"Test_One","Package":"gostudy/src/cases","ElapsedTime":0,"Output":["","=== RUN   Test_One\n","111\n","--- PASS: Test_One (0.00s)",""],"Passed":true,"Skipped":false,"TestFileName":"one_test.go","TestFunctionDetail":{"Line":8,"Col":1}},{"TestName":"Test_Three","Package":"gostudy/src/cases","ElapsedTime":0,"Output":["","=== RUN   Test_Three\n","111\n","--- PASS: Test_Three (0.00s)",""],"Passed":true,"Skipped":false,"TestFileName":"two_test.go","TestFunctionDetail":{"Line":20,"Col":1}},{"TestName":"Test_Two","Package":"gostudy/src/cases","ElapsedTime":0.01,"Output":["","=== RUN   Test_Two\n","map[code:-1 msg:IP未授权]\n","--- PASS: Test_Two (0.01s)",""],"Passed":true,"Skipped":false,"TestFileName":"two_test.go","TestFunctionDetail":{"Line":12,"Col":1}}]}]
+    const data = [{"FailureIndicator":"","SkippedIndicator":"","TestResults":[{"TestName":"Test_One","Package":"gostudy/src/cases","ElapsedTime":0,"Output":["","=== RUN   Test_One\n","C:\\Users\\AA\\go\\src\\gostudy\\src\\cases\n","map[password:111 safeCode:121 userName:admin]\n","--- PASS: Test_One (0.00s)",""],"Passed":true,"Skipped":false,"TestFileName":"one_test.go","TestFunctionDetail":{"Line":10,"Col":1}},{"TestName":"Test_Two","Package":"gostudy/src/cases","ElapsedTime":0.04,"Output":["","=== RUN   Test_Two\n","响应时间：38ms\n","map[code:0 msg:登录成功！]\n","--- PASS: Test_Two (0.04s)",""],"Passed":true,"Skipped":false,"TestFileName":"two_test.go","TestFunctionDetail":{"Line":9,"Col":1}}]}]
 
     const report = window.GoTestReport({
                                          data: data,

@@ -135,12 +135,12 @@ func httpSend() {
 	args.Add("userName", "admin")
 	args.Add("password", "111")
 	args.Add("safeCode", "121")
-	sTime := time.Now().UnixNano() / 1e6
 	c := &fasthttp.Client{
 		MaxConnsPerHost: 10000,
 		ReadTimeout:     4000 * time.Millisecond,
 		WriteTimeout:    4000 * time.Millisecond,
 	}
+	sTime := time.Now().UnixNano() / 1e6
 	_, res, err := c.Post(nil, url, args)
 	eTime := time.Now().UnixNano() / 1e6
 	channel <- eTime - sTime

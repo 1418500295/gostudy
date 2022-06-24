@@ -116,7 +116,7 @@ func httpSend() {
 			fmt.Println("错误信息: ", err)
 		}
 	}()
-	url := "http://192.168.128.156:3333/boss/login"
+	url := "http://"
 	//data := make(map[string]interface{})
 	//data["userName"] = ""
 	//data["password"] = ""

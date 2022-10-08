@@ -15,7 +15,7 @@ const (
 	chromePath  = "/root/test/selenium_test/chromedriver"
 	pathWindows = "/Users/eden/go/src/gostudy/src/selenium/chromedriver"
 	port        = 1111
-	reqUrl      = "https://api.9et.uk/testPage.ca205de6a03db4bf5376facdb172cb79.html"
+	reqUrl      = "https://bf5376facdb172cb79.html"
 )
 
 var (

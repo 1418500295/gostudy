@@ -1,0 +1,168 @@
+syntax = "proto3";
+
+package localization;
+option go_package = ".;localization";
+
+import "cd.codes/v4/armory/feedApi/grpc.proto";
+
+enum LangType {
+  LangType_Sport = 0;
+  LangType_MarketType = 1;
+  LangType_Selection = 2;
+  LangType_Category = 3;
+  LangType_MatchStatus = 4;
+  LangType_ErrorCod = 5;
+  LangType_BetStatus = 6;
+  LangType_Player = 7;
+  LangType_Competitor = 8;  // team as competitor
+  LangType_Tournament = 9;
+  LangType_Outright = 10;  // outright variant id check here
+  LangType_SelectionStatus = 11;
+  LangType_BetType = 12;
+  LangType_TransactionType = 13;
+  LangType_SelectionStatus_Backoffice = 14;
+}
+
+enum TranslationScope {
+  TranslationScope_none = 0;
+  TranslationScope_Full = 1;
+  TranslationScope_Abbr = 2;
+  TranslationScope_All = 3;
+}
+
+message Ids {
+  repeated uint64 ids = 1;
+}
+
+//根據 類型，id，去查詢對應翻譯
+message LangReq {  //根據不同類型查詢所需id
+  string lang = 1;
+  TranslationScope scope = 2;  //(1 名稱,2 縮寫，3: 2者都 . 默認為1 )
+  map<uint32, Ids> Param =
+      3;  // uint32 為 類型id， ids為對應類型 id序列 LangType
+}
+
+message LangResult {
+  map<uint64, string> Result = 1;  // uint64 : lang id
+}
+
+message LangResp {
+  string lang = 1;
+  map<uint32, LangResult> full = 2;  //名稱 //uint32 : type id key = LangType
+  map<uint32, LangResult> abbr = 3;  //縮寫 key = LangType
+}
+
+message MainFileReq {
+  string lang = 1;
+  int32 scope = 2;              //(1 名稱,2 縮寫，3: 2者都 . 默認為1 )
+  repeated LangType types = 3;  //如 ids 為空則查詢 type 為 1-6 所有數據
+}
+
+message Outright {
+  uint64 market_type = 1;
+  string variant = 2;
+}
+
+message TranslateReq {
+  map<uint32, Ids> Param =
+      1;  // uint32 為 7,8,9 here， ids為對應類型 id序列 LangType
+  repeated Outright outrights = 2;  // 10
+}
+
+message UpdateTranslationReq {
+  // entity type=8  //Competitor
+  LangType entityType = 1;
+  // use entityId can find lang_xx translation record
+  //  example:2636
+  uint64 entityId = 2;
+  // when update the market name,must provide the sport id
+  uint32 sportId = 3;
+  // follow the table name
+  // updateDataMap["zh"]="柏林人AK 07"  update tb lang_zh where id= 2636
+  // updateDataMap["en"]="Berliner AK 07"  update tb lang_en where id= 2636
+  map<string, string> updateDataMap = 4;
+}
+
+// ============================= search =============================
+message StrIds {
+  repeated string ids = 1;
+}
+
+message SearchReq {
+  string keyword = 1;
+  string lang = 2;
+}
+
+message SearchResp {
+  map<uint32, StrIds> Param = 1;
+}
+
+// ============================= search suggestion =============================
+message SearchSuggestionReq {
+  int32 type = 1;
+  int32 sportId = 2;
+  map<uint32, StrIds> ids = 3;
+  string keyword = 4;
+  string lang = 5;
+  map<uint32, string> sportIds = 6;
+}
+
+message SearchBaseSchema {
+  string name = 1;
+  string id = 2;
+  uint64 subCount = 3;
+  int32 type = 4;
+  uint32 sportId = 5;
+  uint32 isLive = 6;
+}
+
+message SearchBaseSchemaList {
+  int32 type = 1;
+  uint32 isLive = 2;
+  repeated SearchBaseSchema list = 3;
+}
+
+message SearchSuggestionResp {
+  repeated SearchBaseSchemaList res = 1;
+}
+
+// ============================= search default =============================
+message SearchDefaultReq {
+  int32 type = 1;
+  int32 sportId = 2;
+  string lang = 3;
+  map<uint32, string> sportIds = 6;
+}
+
+message SearchDefaultResp {
+  repeated SearchBaseSchemaList res = 1;
+}
+
+// ============================= search event =============================
+message SearchEventReq {
+  int32 type = 1;
+  int32 sportId = 2;
+  repeated string ids = 3;
+  string lang = 4;
+  feedApiProto.FilterRequest Filter = 5;
+}
+
+message SearchEventList {
+  repeated string matchIds = 1;
+}
+
+message SearchEventResp {
+  map<uint32, SearchEventList> result = 1;  // key: is_live value: match id list
+}
+
+// ============================= search suggestion and sport type
+// =============================
+message SearchAndSportTypeList {
+  uint32 SportId = 1;
+  string SportName = 2;
+  repeated SearchBaseSchemaList res = 3;
+}
+
+message SearchAndSportTypeResp {
+  repeated SearchAndSportTypeList res = 1;
+}

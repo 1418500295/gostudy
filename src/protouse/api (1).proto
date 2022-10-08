@@ -1,0 +1,483 @@
+syntax = "proto3";
+package sportBookProto;
+
+option go_package = ".;sportBookProto";
+
+import "cd.codes/core/micro_common/src/cliTools/clickhouseModelBuilder/sportdbV4/proto/sportdbV4.proto";
+import "cd.codes/v4/armory/common/common.proto";
+import "cd.codes/v4/armory/feedApi/grpc.proto";
+import "cd.codes/core/micro_common/src/protobuf/dataTypes/dataTypes.proto";
+import "google/protobuf/timestamp.proto";
+
+enum ResponseStatus {
+
+  // System
+  UnderMaintenanceMode = 0;
+  ResponseStatus_Ok = 11000;
+  ResponseStatus_BadRequest = 10001;
+  ResponseStatus_Unauthorized = 10002;
+  ResponseStatus_InternalError = 10003;
+  ResponseStatus_ServiceUnavailable = 10004;
+  Error_GeneralSystemError = 10005;
+
+  // Login Session Related
+  NoLoginStatus = 12100;
+  LoginTokenOrSessionExpired = 12101;
+  NoResponseForTheClient = 12102;
+  IncorrectUserInfo = 10103;
+  ParameterError = 10104;
+  ProtoUnmarshalError = 10105;
+  SystemError = 10106;
+  Error_CannotReachTheAccountInfo = 10107;
+  Error_CannotReachTheBalanceInfo = 10108;
+
+  // Betting Related
+  ResponseStatus_PlayerFrozen = 10200;
+  ResponseStatus_InsufficientStake = 12201;
+  ResponseStatus_OutcomeClosed = 12202;
+  ResponseStatus_MatchDuplicate = 12203;
+  ResponseStatus_MatchClose = 12204;
+  ResponseStatus_RiskExceed = 12205;
+  ResponseStatus_OddsChanged = 12206;
+  ResponseStatus_LowerThanMinStake = 12217;
+
+  ExceedThePlayersGeneralProfitLimits = 12208;
+  ExceedTheMaxNumberOfTheMultipleBet = 12209;
+  RelatedContingencyOrBettingOfOutrightMarketsInMultipleBet = 12210;
+  Error_CannotGetTheMaxStake = 12211;
+  Error_CannotGetTheMaxProfit = 10212;
+  Error_CannotGetTheMultipleSetting = 10213;
+  Error_CannotGetThePlayerGroupSetting = 10214;
+  Error_InspectionTimeout = 10215;
+  Error_TheBetIDsIsInvalid = 10216;
+
+
+}
+
+enum OddsType {
+  Decimal = 0;
+  HK = 1;
+  American = 2;
+}
+
+message MatchAndMarketResponse {
+  repeated Match Matches = 1;
+  commonProto.Pager Pager = 2;
+  map<string, modelProtoInsportdbV4.MarketsExt> MarketExtByTypeId = 3;
+}
+
+message OutrightResponse {
+  repeated Tournament Tournaments = 1;
+  commonProto.Pager Pager = 2;
+  map<string, modelProtoInsportdbV4.MarketsExt> MarketExtByTypeId = 3;
+}
+
+message MarketGroupResponse {
+  ResponseStatus Status = 1;
+  repeated MarketGroupData MarketGroupDatas = 2;
+}
+
+message MarketGroupData {
+  string GroupId = 1;
+  repeated string MarketIds = 2;
+}
+
+
+message Tournament {
+  string TournamentId = 1;
+  string Tournament = 2;
+  string Category = 3;
+  string Sport = 4;
+  string Season = 5;
+  // string Name = 2;
+  repeated Market Markets = 6;
+}
+
+message Category {
+  uint32 CategoryId = 1;
+  string Name = 2;
+  repeated Tournament Tournaments = 3;
+}
+
+message Match {
+  string MatchId = 1;
+  string Category = 2;
+  string Tournament = 3;
+  commonProto.MatchStatus StatusId = 4;
+  string Team1Id = 5;
+  string Team1 = 6;
+  string Team2Id = 7;
+  string Team2 = 8;
+  google.protobuf.Timestamp KickoffTime = 9;
+  string TournamentId = 10;
+  uint32 SportId = 11;
+  uint32 CategoryId = 12;
+  repeated uint32 StopBetGroups = 13;
+  repeated Market Markets = 14;
+  repeated Info Infos = 15;
+  uint32 MarketCount = 16;
+  feedApiProto.Streamings streamings = 17;
+  uint32 MediaType = 18;
+  string Team1Logo = 19;
+  string Team2Logo = 20;
+  google.protobuf.Timestamp InfoUpdated = 21;
+}
+
+message Market {
+  string MarketId = 1;
+  string MarketTypeId = 2;
+  string MarketType = 3;
+  repeated uint32 Group = 4;
+  string Specifier = 5;
+  string ExtendSpecifier = 6;
+  google.protobuf.Timestamp StopBetTime = 7;
+  repeated Outcome Outcomes = 8;
+  commonProto.MarketAndOutcomeStatus Status = 9;
+  uint64 VariantId = 10;
+  string Variant = 11;
+  uint64 OutcomeUpdatedAt = 12;
+  //  repeated string Templates = 8;
+  //  uint32 Orientation = 9;
+  //  uint32 ColumnNum = 10;
+  //  uint32 Motion = 11;
+}
+
+message Outcome {
+  string OutcomeId = 1;
+  string Odds = 2;
+  repeated IdNamePair Teams = 3;
+  repeated IdNamePair Players = 4;
+  repeated string Others = 5;
+  uint32 Sort = 6;
+  uint32 ColumnId = 7;
+  string SelectionId = 8;
+  string Selection = 9;
+  commonProto.MarketAndOutcomeStatus Status = 10;
+  google.protobuf.Timestamp UpdatedAt = 11;
+}
+
+message IdNamePair {
+  string Id = 1;
+  string Name = 2;
+}
+
+message Info {
+  uint32 TypeId = 1;
+  uint32 MatchStatus = 2;
+  uint32 Number = 3;
+  float Value1 = 4;
+  dataTypes.NullFloat32 Value2 = 5;
+}
+
+message PlaceBetRequest {
+  bool AcceptOddsChange = 1;
+  repeated SelectionList Selections = 2;
+  repeated MultiLineDetail BetDetails = 3;
+  string voucherId = 4;
+  OddsType OddsType = 5;
+}
+
+message BetLimitResponse {
+  message Limit {
+    double Stake = 1;
+    double Return = 2;
+  }
+  ResponseStatus Status = 1;
+  string Message = 2;
+  repeated Limit Limits = 3;
+}
+
+message BetHistoryRequest {
+  google.protobuf.Timestamp StartTime = 1;
+  google.protobuf.Timestamp EndTime = 2;
+  bool Settled = 3;
+  commonProto.Pager Pager = 4;
+  google.protobuf.Timestamp LastUpdated = 5;
+}
+
+message Response {
+  ResponseStatus Status = 1;
+  string Message = 2;
+  google.protobuf.Timestamp LastUpdated = 3;
+}
+
+message SelectionList {
+  string OutcomeId = 1;
+  string Odds = 2;
+  string MarketId = 3;
+}
+
+message MultiLineDetail {
+  commonProto.OrderType Type = 1;
+  double Stake = 2;
+}
+
+message PlayerOrders {
+  ResponseStatus Status = 1;
+  repeated Order Orders = 2;
+  commonProto.Pager Pager = 3;
+}
+
+message Order {
+  string OrderId = 1;
+  commonProto.OrderType OrderType = 2;
+  google.protobuf.Timestamp BetTime = 3;
+  google.protobuf.Timestamp SettledTime = 4;
+  string TotalStake = 5;
+  string TotalReturn = 6;
+  repeated Selection Selections = 7;
+  repeated Bet Bets = 8;
+  OddsType OddsType = 9;
+}
+
+message Bet {
+  string BetId = 1;
+  repeated uint32 SelectionPositions = 2;
+  string Odds = 3;
+  string Stake = 4;
+  string Return = 5;
+  commonProto.BetStatus Status = 6;
+  google.protobuf.Timestamp SettledTime = 7;
+}
+
+message BetSelection {
+  uint64 Id = 1;
+  uint64 CartId = 2;
+  int64 SelectionId = 3;
+  commonProto.SelectionStatus Status = 4;
+  commonProto.OutcomeResult Result = 5;
+  commonProto.BetSuspiciousStatus Suspicious = 6;
+  uint64 BetMatchID = 7;
+  uint64 MarketId = 8;
+  uint64 OutcomeId = 9;
+  uint32 OutcomeProducer = 10;
+  uint32 MarketTypeId = 11;
+  float Odds = 12;
+  bool IsLive = 13;
+  bytes MarketOutcome = 14;
+  google.protobuf.Timestamp SettleTime = 15;
+  google.protobuf.Timestamp CreatedAt = 16;
+  google.protobuf.Timestamp UpdatedAt = 17;
+  int32 ManualSettled = 19;
+}
+
+message BetOrder {
+  uint64 CartId = 1;
+  uint32 OperatorId = 2;
+  uint64 PlayerId = 3;
+  commonProto.OrderType OrderType = 4;
+  float TotalStake = 5;
+  google.protobuf.Timestamp BetTime = 6;
+  uint32 Numlines = 7;
+  uint32 CurrencyId = 8;
+  repeated Parlays Parlays = 9;
+  repeated float Odds = 10;
+}
+
+message Parlays {
+  repeated uint64 Parlay = 1;
+}
+
+message Selection {
+  string OutcomeId = 1;
+  string MarketTypeId = 2;
+  string MarketType = 3;
+  string SelectionId = 4;
+  string Selection = 5;
+  string Odds = 6;
+  string Specifier = 7;
+  string Team1 = 8;
+  string Team2 = 9;
+  bool InPlay = 10;
+  string Score1 = 11;
+  string Score2 = 12;
+  google.protobuf.Timestamp KickoffTime = 13;
+  string Tournament = 14;
+  commonProto.SelectionStatus Status = 15;
+  bool IsOutright = 16;
+  int64 BetMatchID = 17;
+  uint32 SportId = 18;
+  string Category = 19;
+}
+
+message TransactionHistoryRequest{
+  google.protobuf.Timestamp StartTime = 1;
+  google.protobuf.Timestamp EndTime = 2;
+  commonProto.Pager Pager = 3;
+}
+
+message MarketGroupRequest {
+  string SportID = 1;
+}
+
+message Transaction {
+  ResponseStatus Status = 1;
+  double TotalTransfer = 2;
+  double TotalWinLoss = 3;
+  repeated TransactionHistory Historys = 4;
+  commonProto.Pager Pager = 5;
+}
+
+message TransactionHistory {
+  string ID = 1;
+  commonProto.TransactionType TransType = 2;
+  google.protobuf.Timestamp TransTime = 3;
+  string OrderId = 4;
+  int32 BetNum = 5;
+  double Amount = 6;
+  string TransId = 7;
+}
+
+enum TransactionType {
+  Deposit = 0;
+  Withdrawal = 1;
+  Stake = 2;
+  Return = 3;
+  Correction = 4;
+  Resettle = 5;
+  Cashout = 6;
+  BetError_Adjustment = 7;
+  SettleError_Adjustment = 8;
+}
+
+
+message SearchEventMatchResponse {
+  uint32 isLive = 1;
+  MatchAndMarketResponse result = 2;
+}
+
+message Matches {
+  Match Match = 1;
+  int32 MarketCount = 2;
+}
+
+message BetSlipDataResponse {
+  repeated Outcome Outcomes = 1;
+  repeated Market Markets = 2;
+  repeated Matches Matches = 3;
+  repeated modelProtoInsportdbV4.Season Seasons = 4;
+  repeated modelProtoInsportdbV4.Tournament Tournaments = 5;
+}
+
+message BetSlipRefreshResponse{
+  ResponseStatus Status = 1;
+  BetSlipDataResponse BetSlipDataResponse = 2;
+}
+
+message BetSlipRefreshRequest {
+  repeated string OutcomeIds = 1;
+  repeated string MarketIds = 2;
+  commonProto.Pager Pager = 3;
+}
+
+message TournamentCategory {
+  uint64 categoryId = 1;
+  string categoryName = 2;
+  repeated TournamentCount tournamentCount = 3;
+}
+
+message TournamentCount {
+   uint64 tournamentId = 1;
+   string tournamentName = 2;
+   uint64 matchCount = 3;
+   repeated uint64 MatchIds = 4;
+}
+
+message FilterCountResponse {
+  ResponseStatus Status = 1;
+  string Message = 2;
+  repeated int64 Popular = 3;
+  repeated TournamentCategory tournamentCategory = 4;
+}
+
+message OptimizedMatchAndMarketResponse {
+  repeated OptimizedMatch Matches = 1;
+  commonProto.Pager Pager = 2;
+  map<string, modelProtoInsportdbV4.MarketsExt> MarketExtByTypeId = 3;
+  map<uint32, string> CategoryIdToCategory = 4;
+  map<string, string> TournamentIdToTournament = 5;
+  map<string, string> MarketTypeIdToMarketType = 6;
+}
+
+message OptimizedOutrightResponse {
+  repeated OptimizedTournament Tournaments = 1;
+  commonProto.Pager Pager = 2;
+  map<string, modelProtoInsportdbV4.MarketsExt> MarketExtByTypeId = 3;
+  map<string, string> TournamentIdToTournament = 4;
+  map<string, string> MarketTypeIdToMarketType = 5;
+  string Selection = 6;
+  map<uint64, string> CategoryIdToCategory = 7;
+}
+
+message OptimizedTournament {
+  string TournamentId = 1;
+  uint64 CategoryId = 2;
+  string Sport = 3;
+  string Season = 4;
+  repeated OptimizedMarket Markets = 5;
+  // string Name = 2;
+
+
+}
+
+message OptimizedCategory {
+  uint32 CategoryId = 1;
+  string Name = 2;
+  repeated OptimizedTournament Tournaments = 3;
+  map<string, string> TournamentIdToTournament = 4;
+  map<string, string>  MarketTypeIdToMarketType = 5;
+}
+
+message OptimizedMatch {
+  string MatchId = 1;
+  string Team1Logo = 2;
+  string Team2Logo = 3;
+  commonProto.MatchStatus StatusId = 4;
+  string Team1Id = 5;
+  string Team1 = 6;
+  string Team2Id = 7;
+  string Team2 = 8;
+  google.protobuf.Timestamp KickoffTime = 9;
+  string TournamentId = 10;
+  uint32 SportId = 11;
+  uint32 CategoryId = 12;
+  repeated uint32 StopBetGroups = 13;
+  repeated OptimizedMarket Markets = 14;
+  repeated Info Infos = 15;
+  uint32 MarketCount = 16;
+  feedApiProto.Streamings streamings = 17;
+  uint32 MediaType = 18;
+}
+
+message OptimizedMarket {
+  string MarketId = 1;
+  string MarketTypeId = 2;
+  uint64 OutcomeUpdatedAt = 3;
+  repeated uint32 Group = 4;
+  string Specifier = 5;
+  string ExtendSpecifier = 6;
+  google.protobuf.Timestamp StopBetTime = 7;
+  repeated OptimizedOutcome Outcomes = 8;
+  commonProto.MarketAndOutcomeStatus Status = 9;
+  uint64 VariantId = 10;
+  string Variant = 11;
+  map<string, string> SelectionIdToSelection = 12;
+
+  //  repeated string Templates = 8;
+  //  uint32 Orientation = 9;
+  //  uint32 ColumnNum = 10;
+  //  uint32 Motion = 11;
+}
+
+message OptimizedOutcome {
+  string OutcomeId = 1;
+  string Odds = 2;
+  repeated IdNamePair Teams = 3;
+  repeated IdNamePair Players = 4;
+  repeated string Others = 5;
+  uint32 Sort = 6;
+  uint32 ColumnId = 7;
+  string SelectionId = 8;
+  commonProto.MarketAndOutcomeStatus Status = 9;
+
+}

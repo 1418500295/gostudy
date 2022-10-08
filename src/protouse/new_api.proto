@@ -1,0 +1,511 @@
+syntax = "proto3";
+package sportBookProto;
+//import "google/protobuf/timestamp.proto";
+import "timestamp.proto";
+option go_package = "./";
+enum ResponseStatus {
+  // System
+  UnderMaintenanceMode = 0;
+  ResponseStatus_Ok = 11000;
+  ResponseStatus_BadRequest = 10001;
+  ResponseStatus_Unauthorized = 10002;
+  ResponseStatus_InternalError = 10003;
+  ResponseStatus_ServiceUnavailable = 10004;
+  Error_GeneralSystemError = 10005;
+
+  // Login Session Related
+  NoLoginStatus = 12100;
+  LoginTokenOrSessionExpired = 12101;
+  NoResponseForTheClient = 12102;
+  IncorrectUserInfo = 10103;
+  ParameterError = 10104;
+  ProtoUnmarshalError = 10105;
+  SystemError = 10106;
+  Error_CannotReachTheAccountInfo = 10107;
+  Error_CannotReachTheBalanceInfo = 10108;
+
+  // Betting Related
+  ResponseStatus_PlayerFrozen = 10200;
+  ResponseStatus_InsufficientStake = 12201;
+  ResponseStatus_OutcomeClosed = 12202;
+  ResponseStatus_MatchDuplicate = 12203;
+  ResponseStatus_MatchClose = 12204;
+  ResponseStatus_RiskExceed = 12205;
+  ResponseStatus_OddsChanged = 12206;
+  ResponseStatus_LowerThanMinStake = 12217;
+
+  ExceedThePlayersGeneralProfitLimits = 12208;
+  ExceedTheMaxNumberOfTheMultipleBet = 12209;
+  RelatedContingencyOrBettingOfOutrightMarketsInMultipleBet = 12210;
+  Error_CannotGetTheMaxStake = 12211;
+  Error_CannotGetTheMaxProfit = 10212;
+  Error_CannotGetTheMultipleSetting = 10213;
+  Error_CannotGetThePlayerGroupSetting = 10214;
+  Error_InspectionTimeout = 10215;
+  Error_TheBetIDsIsInvalid = 10216;
+}
+enum MatchStatus {
+  MatchStatus_Ended = 0;
+  MatchStatus_InProgress = 1;
+  MatchStatus_Pending = 2;
+  MatchStatus_Canceled = 3;
+  MatchStatus_Interrupted = 4;
+  MatchStatus_Unknown = 10;
+}
+enum MarketAndOutcomeStatus {
+  MarketAndOutcomeStatus_Unknown = 0;
+  MarketAndOutcomeStatus_Open = 1;
+  MarketAndOutcomeStatus_Suspended = 2;
+  MarketAndOutcomeStatus_Closed = 3;
+}
+enum OrderType {
+  OrderType_unknown = 0;
+  OrderType_Single = 1;
+  OrderType_Double = 2;
+  OrderType_Treble = 3;
+  OrderType_4folds = 4;
+  OrderType_5folds = 5;
+  OrderType_6folds = 6;
+  OrderType_7folds = 7;
+  OrderType_8folds = 8;
+  OrderType_9folds = 9;
+  OrderType_10folds = 10;
+  OrderType_Trixie = 103;
+  OrderType_Yankee = 104;
+  OrderType_SuperYankee = 105;
+  OrderType_Heinz = 106;
+  OrderType_SuperHeinz = 107;
+  OrderType_Goliath = 108;
+  OrderType_Block9 = 109;
+  OrderType_Block10 = 110;
+  OrderType_Pantent = 203;
+  OrderType_Luck15 = 204;
+  OrderType_Luck31 = 205;
+  OrderType_Luck63 = 206;
+}
+enum BetStatus {
+  BetStatus_Unknown = 0;
+  BetStatus_Active = 1;
+  BetStatus_Won = 2;
+  BetStatus_HalfWon = 3;
+  BetStatus_Lost = 4;
+  BetStatus_HalfLost = 5;
+  BetStatus_Void = 6;
+  BetStatus_ErrorSuspended = 7;
+  BetStatus_WonDeadHeat = 8;
+  BetStatus_Cancelled = 9;
+  BetStatus_AutoSuspended = 10;
+  BetStatus_Fixed = 11;
+  BetStatus_ManualSuspended = 12;
+  BetStatus_VoucherRevoked = 13;
+  BetStatus_CashOut = 14;
+}
+enum TransactionTypeV4 {
+  TransactionType_Auto = 0;
+  TransactionType_TransferIn = 1;
+  TransactionType_TransferOut = 2;
+  TransactionType_Bet = 3;
+  TransactionType_Settle = 4;
+  TransactionType_Adjustment = 5;
+  TransactionType_CashOut = 6;
+  TransactionType_BetRollback = 7;
+  TransactionType_SettleRollback = 8;
+  TransactionType_Resettle = 9;
+  TransactionType_VoucherCashBack = 10;
+  TransactionType_VoucherFreeBet = 11;
+}
+enum OddsType {
+  Decimal = 0;
+  HK = 1;
+  American = 2;
+}
+enum SelectionStatus {
+  SelectionStatus_Unknown = 0;
+  SelectionStatus_Active = 1;
+  SelectionStatus_Won = 2;
+  SelectionStatus_HalfWon = 3;
+  SelectionStatus_Lost = 4;
+  SelectionStatus_HalfLost = 5;
+  SelectionStatus_Void = 6;
+  SelectionStatus_ErrorSuspended = 7;
+  SelectionStatus_WonDeadHeat = 8;
+  SelectionStatus_Cancelled = 9;
+  SelectionStatus_AutoSuspended = 10;
+
+  SelectionStatus_ManualSuspended = 12;
+
+  SelectionStatus_CashOut = 14;
+}
+enum MarketGroupType {
+  MarketGroupType_None = 0;
+  MarketGroupType_FOOTBALL_HDP_OU = 1;
+  MarketGroupType_FOOTBALL_CORRECT_SCORE = 2;
+  MarketGroupType_FOOTBALL_3_WAY_HDP = 3;
+  MarketGroupType_FOOTBALL_HALF_FULL = 4;
+  MarketGroupType_FOOTBALL_ODD_EVEN = 5;
+  MarketGroupType_FOOTBALL_NEXT_LAST_GOAL = 6;
+  MarketGroupType_FOOTBALL_GOAL_RANGE = 7;
+  MarketGroupType_FOOTBALL_WIN_MARGIN = 8;
+  MarketGroupType_FOOTBALL_CORNER = 9;
+  MarketGroupType_FOOTBALL_OUTRIGHT = 10;
+  MarketGroupType_BASKETBALL_HDP_OU = 11;
+  MarketGroupType_BASKETBAL_WIN_MARGIN = 12;
+  MarketGroupType_BASKETBAL_OUTRIGHT = 13;
+  MarketGroupType_TENNIS_HDP_OU = 14;
+  MarketGroupType_TENNIS_OUTRIGHT = 15;
+  MarketGroupType_AMERICA_FOOTBALL_HDP_OU = 16;
+  MarketGroupType_AMERICA_FOOTBALL_ODD_EVEN = 17;
+  MarketGroupType_AMERICA_FOOTBALL_OUTRIGHT = 18;
+  MarketGroupType_ICE_HOCKEY_HDP_OU = 19;
+  MarketGroupType_ICE_HOCKEY_OUTRIGHT = 20;
+  MarketGroupType_SNOOKER_HDP_OU = 21;
+  MarketGroupType_SNOOKER_OUTRIGHT = 22;
+  MarketGroupType_TABLE_TENNIS_HDP_OU = 23;
+  MarketGroupType_TABLE_TENNIS_EXACT_GAMES = 24;
+  MarketGroupType_TABLE_TENNIS_OUTRIGHT = 25;
+  MarketGroupType_VOLLEYBALL_HDP_OU = 26;
+  MarketGroupType_VOLLEYBALL_OUTRIGHT = 27;
+  MarketGroupType_BADMINTON_HDP_OU = 28;
+  MarketGroupType_BADMINTON_EXACT_GAMES = 29;
+  MarketGroupType_BADMINTON_OUTRIGHT = 30;
+  MarketGroupType_BEACH_VOLLEY_HDP_OU = 31;
+  MarketGroupType_BEACH_VOLLEY_OUTRIGHT = 32;
+}
+enum BoolFilter {
+  BoolFilter_NotFilter = 0;
+  BoolFilter_FALSE = 1;
+  BoolFilter_TRUE = 2;
+}
+
+message FilterRequest {
+  Pager Pager = 1;
+  BoolFilter IsLive = 2;
+  repeated uint32 MarketTypes = 3;
+  repeated uint32 SportIds = 4;
+  repeated google.protobuf.Timestamp Times = 5;
+  MarketGroupType MarketGroupType = 6;
+  repeated string MatchIds = 7;
+  repeated uint64 OutcomeIds = 8;
+  BoolFilter IsOutright = 9;
+  repeated string Tournaments = 10;
+  repeated string Seasons = 11;
+  repeated uint32 CategoryIds = 12;
+}
+message Pager {
+  uint32 TotalRecords = 1;
+  uint32 Page = 2;
+  uint32 PageSize = 3;
+}
+message MarketsExt {
+	uint64 Id = 1;
+	uint32 Cashout = 2;
+	uint32 Sort = 3;
+	uint32 Orientation = 4;
+	uint32 ColumnNum = 5;
+	uint32 Motion = 6;
+	repeated string Templates = 7;
+}
+message MatchAndMarketResponse {
+  repeated Match Matches = 1;
+  Pager Pager = 2;
+  map<string, MarketsExt> MarketExtByTypeId = 3;
+}
+message OutrightResponse {
+  repeated Tournament Tournaments = 1;
+  Pager Pager = 2;
+  map<string, MarketsExt> MarketExtByTypeId = 3;
+}
+message MarketGroupResponse {
+  ResponseStatus Status = 1;
+  repeated MarketGroupData MarketGroupDatas = 2;
+}
+message MarketGroupData {
+  string GroupId = 1;
+  repeated string MarketIds = 2;
+}
+message NullString {
+    string String = 1;
+    bool Valid = 2;
+}
+message Tournament {
+  string TournamentId = 1;
+  string Tournament = 2;
+  string Category = 3;
+  string Sport = 4;
+  string Season = 5;
+  // string Name = 2;
+  repeated Market Markets = 6;
+}
+message Category {
+  uint32 CategoryId = 1;
+  string Name = 2;
+  repeated Tournament Tournaments = 3;
+}
+message StreamInfo {
+  string StreamName = 1;
+  string StreamType = 2;
+}
+message Streamings {
+  repeated StreamInfo Streaming = 1;
+}
+message Match {
+  string MatchId = 1;
+  string Category = 2;
+  string Tournament = 3;
+  MatchStatus StatusId = 4;
+  string Team1Id = 5;
+  string Team1 = 6;
+  string Team2Id = 7;
+  string Team2 = 8;
+  google.protobuf.Timestamp KickoffTime = 9;
+  string TournamentId = 10;
+  uint32 SportId = 11;
+  uint32 CategoryId = 12;
+  repeated uint32 StopBetGroups = 13;
+  repeated Market Markets = 14;
+  repeated Info Infos = 15;
+  uint32 MarketCount = 16;
+  Streamings streamings = 17;
+  uint32 MediaType = 18;
+}
+message Market {
+  string MarketId = 1;
+  string MarketTypeId = 2;
+  string MarketType = 3;
+  repeated uint32 Group = 4;
+  string Specifier = 5;
+  string ExtendSpecifier = 6;
+  google.protobuf.Timestamp StopBetTime = 7;
+  repeated Outcome Outcomes = 8;
+  MarketAndOutcomeStatus Status = 9;
+  uint64 VariantId = 10;
+  string Variant = 11;
+  //  repeated string Templates = 8;
+  //  uint32 Orientation = 9;
+  //  uint32 ColumnNum = 10;
+  //  uint32 Motion = 11;
+}
+message Outcome {
+  string OutcomeId = 1;
+  string Odds = 2;
+  repeated IdNamePair Teams = 3;
+  repeated IdNamePair Players = 4;
+  repeated string Others = 5;
+  uint32 Sort = 6;
+  uint32 ColumnId = 7;
+  string SelectionId = 8;
+  string Selection = 9;
+  MarketAndOutcomeStatus Status = 10;
+}
+message OutcomeV4 {
+	uint64 Id = 1;
+	uint64 MarketId = 2;
+	uint64 SelectionId = 3;
+	repeated uint64 Player = 4;
+	repeated uint64 Team = 5;
+	repeated string Other = 6;
+	double Odds = 7;
+	string Probability = 8;
+	NullString WinProbability = 9;
+	NullString RefundProbability = 10;
+	NullString LoseProbability = 11;
+	uint32 Qualifier = 12;
+	MarketAndOutcomeStatus Status = 13;
+	int32 Result = 14;
+	uint32 Version = 15;
+	google.protobuf.Timestamp CreatedAt = 16;
+	google.protobuf.Timestamp UpdatedAt = 17;
+}
+message IdNamePair {
+  string Id = 1;
+  string Name = 2;
+}
+message NullFloat32 {
+    float Float32 = 1;
+    bool Valid = 2;
+}
+message Info {
+  uint32 TypeId = 1;
+  uint32 MatchStatus = 2;
+  uint32 Number = 3;
+  float Value1 = 4;
+  NullFloat32 Value2 = 5;
+}
+message Wallet {
+  uint64	Id = 1;
+  uint32	OperatorId = 2;
+  uint64	PlayerId = 3;
+  uint32	CurrencyId = 4;
+  uint64	BonusId = 5;
+  double	Balance = 6;
+  NullString	VerifyHash = 7;
+  google.protobuf.Timestamp	UpdatedAt = 8;
+  google.protobuf.Timestamp	CreatedAt = 9;
+}
+
+message BalanceResponse {
+  ResponseStatus Status = 1;
+  repeated Wallet Wallets = 2;
+}
+message PlaceBetRequest {
+  bool AcceptOddsChange = 1;
+  repeated SelectionList Selections = 2;
+  repeated MultiLineDetail BetDetails = 3;
+  string voucherId = 4;
+  OddsType OddsType = 5;
+}
+message BetLimitResponse {
+  message Limit {
+    double Stake = 1;
+    double Return = 2;
+  }
+  ResponseStatus Status = 1;
+  string Message = 2;
+  repeated Limit Limits = 3;
+}
+message BetHistoryRequest {
+  google.protobuf.Timestamp StartTime = 1;
+  google.protobuf.Timestamp EndTime = 2;
+  bool Settled = 3;
+  Pager Pager = 4;
+}
+message Response {
+  ResponseStatus Status = 1;
+  string Message = 2;
+}
+message SelectionList {
+  string OutcomeId = 1;
+  string Odds = 2;
+}
+message MultiLineDetail {
+  OrderType Type = 1;
+  double Stake = 2;
+}
+message PlayerOrders {
+  ResponseStatus Status = 1;
+  repeated Order Orders = 2;
+  Pager Pager = 3;
+}
+message Order {
+  string OrderId = 1;
+  OrderType OrderType = 2;
+  google.protobuf.Timestamp BetTime = 3;
+  google.protobuf.Timestamp SettledTime = 4;
+  string TotalStake = 5;
+  string TotalReturn = 6;
+  repeated Selection Selections = 7;
+  repeated Bet Bets = 8;
+  OddsType OddsType = 9;
+}
+message Bet {
+  string BetId = 1;
+  repeated uint32 SelectionPositions = 2;
+  string Odds = 3;
+  string Stake = 4;
+  string Return = 5;
+  BetStatus Status = 6;
+  google.protobuf.Timestamp SettledTime = 7;
+}
+message Selection {
+  string OutcomeId = 1;
+  string MarketTypeId = 2;
+  string MarketType = 3;
+  string SelectionId = 4;
+  string Selection = 5;
+  string Odds = 6;
+  string Specifier = 7;
+  string Team1 = 8;
+  string Team2 = 9;
+  bool InPlay = 10;
+  string Score1 = 11;
+  string Score2 = 12;
+  google.protobuf.Timestamp KickoffTime = 13;
+  string Tournament = 14;
+  SelectionStatus Status = 15;
+  bool IsOutright = 16;
+  int64 BetMatchID = 17;
+  uint32 SportId = 18;
+  string Category = 19;
+}
+message TransactionHistoryRequest{
+  google.protobuf.Timestamp StartTime = 1;
+  google.protobuf.Timestamp EndTime = 2;
+  Pager Pager = 3;
+}
+message MarketGroupRequest {
+  string SportID = 1;
+}
+message Transaction {
+  ResponseStatus Status = 1;
+  double TotalTransfer = 2;
+  double TotalWinLoss = 3;
+  repeated TransactionHistory Historys = 4;
+  Pager Pager = 5;
+}
+message TransactionHistory {
+  string ID = 1;
+  TransactionTypeV4 TransType = 2;
+  google.protobuf.Timestamp TransTime = 3;
+  string OrderId = 4;
+  int32 BetNum = 5;
+  double Amount = 6;
+  string TransId = 7;
+}
+enum TransactionType {
+  Deposit = 0;
+  Withdrawal = 1;
+  Stake = 2;
+  Return = 3;
+  Correction = 4;
+  Resettle = 5;
+  Cashout = 6;
+  BetError_Adjustment = 7;
+  SettleError_Adjustment = 8;
+}
+message SportMarket {
+	uint32 SportId = 1;
+	uint64 MarketId = 2;
+	int32 Status = 3;
+}
+message Season {
+	uint64 Id = 1;
+	uint64 TournamentId = 2;
+	string Name = 3;
+	string Year = 4;
+	google.protobuf.Timestamp StartDate = 5;
+	google.protobuf.Timestamp EndDate = 6;
+	uint32 Live = 7;
+}
+message TournamentV4 {
+	uint64 Id = 1;
+	uint32 Type = 2;
+	string Name = 3;
+	uint32 Sport = 4;
+	uint64 CategoryId = 5;
+	int32 Status = 6;
+	NullString Logo = 7;
+	uint64 CurrentSeasonId = 8;
+}
+message BetDataResponse {
+  repeated OutcomeV4 Outcomes = 1;
+  repeated Market Markets = 2;
+  repeated Match Matches = 3;
+  repeated Season Seasons = 4;
+  repeated TournamentV4 Tournaments = 5;
+}
+
+
+message SearchEventMatchResponse {
+  uint32 isLive = 1;
+  MatchAndMarketResponse result = 2;
+}
+
+message BetSlipRefreshResponse{
+  ResponseStatus Status = 1;
+  BetDataResponse BetDataResponse = 2;
+}
+
+message BetSlipRefreshRequest{ 
+  repeated string OutcomeIds = 2;
+  Pager Pager = 3;
+}

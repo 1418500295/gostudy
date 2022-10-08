@@ -1,0 +1,71 @@
+syntax = "proto3";
+package feedApiProto;
+import "google/protobuf/timestamp.proto";
+
+enum MessageType {
+  UpdateMatch = 0;
+  BetStop = 1;
+  Maintenance = 2;
+  Restore = 3;
+}
+message BetStopMessage {
+  repeated uint32 marketGroups = 1;
+}
+message Message {
+  MessageType type = 1;
+  MatchUpdateMessage data = 2;
+}
+message MatchUpdateMessage {
+  string matchId = 1;
+  uint32 statusId = 2;
+  repeated MarketUpdateMessage markets = 3;
+  repeated InfoUpdateMessage infos = 4;
+  BetStopMessage groups = 5;
+}
+message MarketUpdateMessage {
+  string marketId = 1;
+  // market bettingtype id
+  uint64 marketTypeId = 2;
+  uint32 statusId = 3;
+  repeated OutcomeUpdateMessage outcomes = 4;
+}
+message OutcomeUpdateMessage {
+  string outcomeId = 1;
+  string odds = 2;
+  uint32 statusId = 3;
+}
+message InfoUpdateMessage {
+  // message type
+  uint32 typeID = 1;
+  // match eventpart
+  uint32 matchStatus = 2;
+  uint32 number = 3;
+  double value1 = 4;
+  oneof value {
+    double value2 = 5;
+  }
+  google.protobuf.Timestamp updatedAt = 6;
+}
+
+enum SocketAction {
+  Sub = 0;
+  UnSub = 1;
+}
+
+enum SocketScope {
+  Global = 0;  // 无效
+  List = 1;  // 列表  matchIds  marketTypeIds
+  Detail = 2; // matchIds
+  BetSlip = 3;  // matchIds  marketTypeIds
+}
+
+message PayloadAction {
+  //
+  SocketAction action = 1;
+  // a match id list
+  repeated string matchIds = 2;
+  // the markettype id list
+  repeated uint64 marketTypeIds = 3;
+
+  SocketScope scope = 4;
+}

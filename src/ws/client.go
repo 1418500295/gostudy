@@ -14,7 +14,7 @@ import (
 	"unsafe"
 )
 
-const wsUri = "ws://sports.aisport.live/ws?token=eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NjE4NTY0NzgsImlhdCI6MTY2MTQ5NjQ3OCwiaXNzIjoic3BvcnRib29rX2FwaSIsInN1YiI6InNwb3J0IiwiT3BlcmF0b3JJZCI6MjA5LCJTaXRlSWQiOjY0LCJVc2VySWQiOjEyODk5NDYzOTYsIkN1cnJlbmN5SWQiOjQsIkFjY291bnQiOiJlZGVuMTExMSJ9.8QMT22SKyBhvEY8sD7hVgeiK_UGurw70HCvrhGuPA7lcjUVQfHPFoP0PNxOSE-DQd-vo4sJCftbKUYoAqAXRpA"
+const wsUri = "ws://spnRib29rX2FwaSIsInN1YiI6InNwb3J0IiwkN1cnJlbmN5SWQiOjQsIkFjY291bnQiOiJlZGVuMTExMSJ9.8QMT22SKyBhvEY8sD7hVgeiK_UGurw70HCvrhGuPA7lcjUVQfHPFoP0PNxOSE-DQd-vo4sJCftbKUYoAqAXRpA"
 
 //var origin = "http://127.0.0.1:8080/"
 //var url = "ws://127.0.0.1:8080/echo"

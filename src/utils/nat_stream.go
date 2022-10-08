@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"encoding/json"
@@ -61,9 +61,9 @@ func Delete(js nats.JetStreamContext, name string) {
 
 func AddConsumer(js nats.JetStreamContext, strName, consName, consFilter string) {
 	info, err := js.AddConsumer(strName, &nats.ConsumerConfig{
-		Durable:   consName,
-		AckPolicy: nats.AckExplicitPolicy,
-		// MaxAckPending: 1,      // default value is 20,000
+		Durable:       consName,
+		AckPolicy:     nats.AckExplicitPolicy,
+		MaxAckPending: 1, // default value is 20,000
 		FilterSubject: consFilter,
 	})
 	if err != nil {

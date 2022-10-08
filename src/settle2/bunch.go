@@ -1,8 +1,8 @@
 package main
 
 import (
-	strm "GoCode/work_script/mq"
-	request "GoCode/work_script/protos/proto"
+	//strm "GoCode/work_script/mq"
+	//request "GoCode/work_script/protos/proto"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -10,6 +10,9 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/nats.go"
 	timestamp "google.golang.org/protobuf/types/known/timestamppb"
+	"gostudy/src/protouse"
+	"gostudy/src/protouse/protos"
+	"gostudy/src/utils"
 	"io/ioutil"
 	"log"
 	"math"
@@ -29,7 +32,7 @@ var (
 	wg           sync.WaitGroup
 	nc           *nats.Conn
 	rdb          *redis.Client
-	js           = strm.JetStreamContext(nc)
+	js           = utils.JetStreamContext(nc)
 	client       = &http.Client{}
 	bunch        = []int{3, 4, 5, 6}
 )
@@ -71,22 +74,22 @@ type marketDetail struct {
 	Markets    []Markets `json:"markets"`
 }
 
-type Series struct{
-	marketId string
-	marketType string
-	category string
-	tournament string
+type Series struct {
+	marketId    string
+	marketType  string
+	category    string
+	tournament  string
 	selectionId string
-	matchId string
-	sportId string
-	OutcomeId string
-	Odds string
+	matchId     string
+	sportId     string
+	OutcomeId   string
+	Odds        string
 }
 
 type settleDetail struct {
-	Odds        string `json:"odds"`
-	Outcomes    string `json:"outcomes"`
-	SettleState []int  `json:"settle_state"`
+	Odds        string  `json:"odds"`
+	Outcomes    string  `json:"outcomes"`
+	SettleState []int   `json:"settle_state"`
 	Stake       float64 `json:"stake"`
 }
 
@@ -100,12 +103,12 @@ type settleVerify struct {
 }
 
 type Result struct {
-	Information []settleDetail `json:"information"`
-	To          float64        `json:"to"` // 总赔率
-	Stake       float64        `json:"stake"`
-	EstReturn   float64        `json:"est_return"`   // 返回金额
-	ExpectResult int           `json:"expect_result"`
-	OrderResult int            `json:"order_result"`
+	Information  []settleDetail `json:"information"`
+	To           float64        `json:"to"` // 总赔率
+	Stake        float64        `json:"stake"`
+	EstReturn    float64        `json:"est_return"` // 返回金额
+	ExpectResult int            `json:"expect_result"`
+	OrderResult  int            `json:"order_result"`
 }
 
 var requestData = struct {
@@ -224,13 +227,13 @@ func creatWork(id int) works {
 }
 
 func Decimal(value float64) float64 {
-	if value == math.Trunc(value){
+	if value == math.Trunc(value) {
 		return value
 	}
 	if len(strings.Split(fmt.Sprintf("%v", value), ".")[1]) > 2 {
 		return math.Trunc(value*1e2+1) * 1e-2
-	}else {
-		return math.Trunc(value * 1e2) * 1e-2
+	} else {
+		return math.Trunc(value*1e2) * 1e-2
 
 	}
 }
@@ -242,33 +245,33 @@ func Truncate(f float64, prec int) float64 {
 		return 0
 	}
 	if prec >= len(n) {
-		res, _ := strconv.ParseFloat(n,64)
+		res, _ := strconv.ParseFloat(n, 64)
 		return res
 	}
 	newn := strings.Split(n, ".")
 	if len(newn) < 2 || prec >= len(newn[1]) {
-		res, _ := strconv.ParseFloat(n,64)
+		res, _ := strconv.ParseFloat(n, 64)
 		return res
 	}
 	data := newn[0] + "." + newn[1][:prec]
-	res, _ := strconv.ParseFloat(data,64)
+	res, _ := strconv.ParseFloat(data, 64)
 	return res
 }
 
-func calculateCombination(loop int, num []settleDetail) [][]settleDetail{
+func calculateCombination(loop int, num []settleDetail) [][]settleDetail {
 	nums := make([]int, 0)
-	for i := 0; i < loop; i ++{
+	for i := 0; i < loop; i++ {
 		nums = append(nums, i)
 	}
 	tmp := make([][]settleDetail, 0)
-	for h := 2; h <= loop; h ++ {  // loop 3
+	for h := 2; h <= loop; h++ { // loop 3
 		index := combinationResult(loop, h)
 		hrs := findNumsByIndex(nums, index)
 		// [[0 1] [0 2] [1 2] [0 1 2]
-		for _, hr := range hrs{  // [0 1]
+		for _, hr := range hrs { // [0 1]
 			// 根据组合好的索引取出对应的值
 			ss := make([]settleDetail, 0)
-			for _, com := range hr{
+			for _, com := range hr {
 				ss = append(ss, num[com])
 			}
 			tmp = append(tmp, ss)
@@ -278,12 +281,12 @@ func calculateCombination(loop int, num []settleDetail) [][]settleDetail{
 	return tmp
 }
 
-func calculateOdd(data []settleDetail) (float64, [][]int)   {
+func calculateOdd(data []settleDetail) (float64, [][]int) {
 	var to float64 = 1
 	var ar [][]int
-	for _, e := range data{
+	for _, e := range data {
 		ar = append(ar, e.SettleState)
-		fod,_ := strconv.ParseFloat(e.Odds, 64)
+		fod, _ := strconv.ParseFloat(e.Odds, 64)
 		to *= fod
 	}
 	return to, ar
@@ -303,7 +306,7 @@ func MarshalBinary(d interface{}) ([]byte, error) {
 
 func isIn(s []int, num int) bool {
 	fm := make(map[int]int)
-	for i, v := range(s) {
+	for i, v := range s {
 		fm[v] = i
 	}
 	if _, ok := fm[num]; ok {
@@ -332,18 +335,18 @@ func handlerExpect(verify settleVerify, el int) {
 	data["current_type_name"] = fmt.Sprintf("当前串关: [%d]串[%d]\n", el, howCom)
 	data["total_stake"] = 1.69 * float64(howCom)
 	log.Printf("当前串关: [%d]串[%d]\n", el, howCom)
-	for oi, t := range com{ // 4-1 11
+	for oi, t := range com { // 4-1 11
 		totalOdd, ar := calculateOdd(t)
 		result.Information = t
 		result.To = Truncate(totalOdd, 2)
 		// Stake: 1.69 ar   [[0 2] [0 2]]  [[0 2] [1 9]] [[0 2] [1 9]]  [[0 2] [0 2] [1 9]]
-		status := make([]int, 0)  // 每一组状态
-		for _, outside := range ar{
+		status := make([]int, 0) // 每一组状态
+		for _, outside := range ar {
 			// [{3.20 30128747 [3 4]}  {4.60 33342444 [3 4]}]
 			result.Stake = 1.69
 			av := outside[0]
 			rv := outside[1]
-			switch  {
+			switch {
 			case av == 0 && rv == 2:
 				//result win  相当于发送settlement消息,并且赛果是赢的.
 				status = append(status, 2)
@@ -374,35 +377,35 @@ func handlerExpect(verify settleVerify, el int) {
 			result.EstReturn = 0
 			result.ExpectResult = 4
 			result.OrderResult = 4
-		}else {
+		} else {
 			/*
-			假设投了10的5串1.每个赔率假设是2,[5 2 6 5 6, 3]
-			第一个5: 10/2=5
-			第二个2: 5*2=10
-			第三个6: 10*1=10
-			第四个5: 10/2=5
-			第五个6: 5*1=5
-			第六个3 5+(5/2)*(2-1)
-			 */
+				假设投了10的5串1.每个赔率假设是2,[5 2 6 5 6, 3]
+				第一个5: 10/2=5
+				第二个2: 5*2=10
+				第三个6: 10*1=10
+				第四个5: 10/2=5
+				第五个6: 5*1=5
+				第六个3 5+(5/2)*(2-1)
+			*/
 			var repeat = make([]int, 0)
 			var rMoney float64 = 1.69
-			for index, s := range status{
+			for index, s := range status {
 				if s == 9 {
 					repeat = append(repeat, s)
 				}
-				v, _ := strconv.ParseFloat(t[index].Odds,64)
-				switch s{
+				v, _ := strconv.ParseFloat(t[index].Odds, 64)
+				switch s {
 				case 2:
-					rMoney *=  v
+					rMoney *= v
 					//lastTime.odds = append(lastTime.odds, t[index].Odds)
 				case 3:
-					rMoney += (1.69/v)*(v-1)
+					rMoney += (1.69 / v) * (v - 1)
 				case 5:
-					rMoney /=  v
+					rMoney /= v
 				case 6:
-					rMoney *=  1
+					rMoney *= 1
 				case 9:
-					rMoney *=  1
+					rMoney *= 1
 				default:
 					log.Println("status状态不存在!")
 					break
@@ -413,29 +416,29 @@ func handlerExpect(verify settleVerify, el int) {
 				// 取消 全部为9 并且本金=派奖
 				result.ExpectResult = 9
 				result.OrderResult = 9
-			}else if result.EstReturn > 1.69 {
+			} else if result.EstReturn > 1.69 {
 				// 赢 派奖大于本金
 				result.ExpectResult = 2
 				result.OrderResult = 2
-			}else if result.EstReturn == 1.69 {
+			} else if result.EstReturn == 1.69 {
 				// 走水 同时本金=派奖
 				result.ExpectResult = 6
 				result.OrderResult = 6
-			}else if isIn(status, 5) && result.EstReturn > 0 && result.EstReturn < 1.69 {
+			} else if isIn(status, 5) && result.EstReturn > 0 && result.EstReturn < 1.69 {
 				// 有一个或者多个半输 同时本金>派奖 派奖要大于0
 				result.ExpectResult = 5
 				result.OrderResult = 5
 			}
 			log.Printf("第 [%d] 次, rMoney=%v\n", oi, Decimal(rMoney))
 		}
-		resultSlice = append(resultSlice,result)
+		resultSlice = append(resultSlice, result)
 	}
 	r, err := json.Marshal(resultSlice)
 	if err != nil {
 		log.Panicf("redis Marshal error: %v \n", err)
 		return
 	}
-	data["outcome_information"] =  r
+	data["outcome_information"] = r
 	// 一次性保存多个hash字段值
 	key := randStr(8)
 	err = rdb.HMSet(key, data).Err()
@@ -456,16 +459,16 @@ func publish(js nats.JetStreamContext, subj string, f func(market, outcome uint6
 }
 
 func testMsg(market, outcome uint64, result, action int32) []byte {
-	var s = make([]*request.Settle, 1)
-	s = []*request.Settle{
+	var s = make([]*protos.Settle, 1)
+	s = []*protos.Settle{
 		{
 			Producer: 1,
 			Scope:    []uint32{1, 3},
 			Market:   market,
-			Outcomes: []*request.OutcomeResult{
+			Outcomes: []*protos.OutcomeResult{
 				{
 					Outcome: outcome,
-					Result:  request.OutcomeResultCode(result),
+					Result:  protos.OutcomeResultCode(result),
 					Shared:  1.0,
 					Scope:   []uint32{1, 3},
 				},
@@ -475,8 +478,8 @@ func testMsg(market, outcome uint64, result, action int32) []byte {
 			To:   timestamp.New(time.Now().Add(time.Minute)),
 		},
 	}
-	var settleShell = request.SettleShell{
-		Action:    request.SettleAction(action), // Action 0～3 result Cancel RollbackCancel RollbackSettle
+	var settleShell = protos.SettleShell{
+		Action:    protos.SettleAction(action), // Action 0～3 result Cancel RollbackCancel RollbackSettle
 		Settle:    s,
 		Timestamp: timestamp.New(time.Now().Add(time.Millisecond)),
 	}
@@ -523,7 +526,7 @@ func doJob(id int, c chan int, done chan bool) {
 func RequestFirst(bodyData []byte) []int {
 	// 根据不同MarketGroupType请求获取数据
 	body, err := httpRequest(bodyData, "https://sports.9et.uk/api/v4/match_and_market")
-	response := &request.MatchAndMarketResponse{}
+	response := &protouse.MatchAndMarketResponse{}
 	err = proto.Unmarshal(body, response)
 	if err != nil {
 		log.Fatalf("RequestFirst error: %v \n", err)
@@ -536,9 +539,9 @@ func RequestFirst(bodyData []byte) []int {
 	return noNoneVal
 }
 
-func RequestSecond(gIndex int, bodyData []byte) (response *request.MatchAndMarketResponse) {
+func RequestSecond(gIndex int, bodyData []byte) (response *protouse.MatchAndMarketResponse) {
 	body, err := httpRequest(bodyData, "https://sports.9et.uk/api/v4/match_and_market")
-	response = &request.MatchAndMarketResponse{}
+	response = &protouse.MatchAndMarketResponse{}
 	err = proto.Unmarshal(body, response)
 	if err != nil {
 		log.Printf("第%d 协程 RequestSecond Unmarshal has error: %v \n", gIndex, err)
@@ -552,7 +555,7 @@ func getMarketsDetail(index int, match []int, wg *sync.WaitGroup) {
 	var cc = make(map[int]marketDetail)
 	for _, val := range match { // 一次串关的赛事
 		resp := responseHandle(index, strconv.Itoa(val))
-		var t  marketDetail
+		var t marketDetail
 		for _, m := range resp.Matches {
 			t.SportId = strconv.Itoa(int(m.SportId))
 			t.Category = m.Category
@@ -599,7 +602,7 @@ func getMarketsDetail(index int, match []int, wg *sync.WaitGroup) {
 	log.Printf("current_type: [%d] theMin[%d], 有%d场赛事, 赛事列表: %v\n", tt, theMinMarket, currentBunch, keys)
 	for i := 0; i < theMinMarket; i++ { // theMin 100 Markets
 		for j := 0; j < 2; j++ { // 每个Market下的outcome
-			place := make([]*request.SelectionList, 0)
+			place := make([]*protouse.SelectionList, 0)
 			var series Series
 			seriesPlace := make([]Series, 0)
 			for ii := 0; ii < currentBunch; ii++ { // 3 赛事长度
@@ -619,7 +622,7 @@ func getMarketsDetail(index int, match []int, wg *sync.WaitGroup) {
 					当前赛事: 2787029000, 第0次的Outcomes信息: [[<nil> OutcomeId:"29386416"  Odds:"1.80" OutcomeId:"29386352"  Odds:"1.80"]]
 					当前赛事: 2922885000, 第0次的Outcomes信息: [[<nil> OutcomeId:"30871673"  Odds:"5.20" OutcomeId:"30871674"  Odds:"1.13"]]
 				*/
-				selection := &request.SelectionList{
+				selection := &protouse.SelectionList{
 					OutcomeId: series.OutcomeId,
 					Odds:      series.Odds,
 				}
@@ -627,12 +630,12 @@ func getMarketsDetail(index int, match []int, wg *sync.WaitGroup) {
 				seriesPlace = append(seriesPlace, series)
 			}
 			// 投注逻辑
-			var BetRequest = request.PlaceBetRequest{
+			var BetRequest = protouse.PlaceBetRequest{
 				AcceptOddsChange: true,
 				Selections:       place,
-				BetDetails: []*request.MultiLineDetail{
+				BetDetails: []*protouse.MultiLineDetail{
 					{
-						Type:  request.OrderType(tt),
+						Type:  protouse.OrderType(tt),
 						Stake: 1.69,
 					},
 				},
@@ -643,7 +646,7 @@ func getMarketsDetail(index int, match []int, wg *sync.WaitGroup) {
 				return
 			}
 			rep, _ := httpRequest(b, "https://sports.9et.uk/api/v4/bet")
-			betResponse := &request.Response{}
+			betResponse := &protouse.Response{}
 			err = proto.Unmarshal(rep, betResponse)
 			if err != nil {
 				log.Printf("第[%d]->bet bet proto Unmarshal has error: %v \n", i, err)
@@ -657,11 +660,11 @@ func getMarketsDetail(index int, match []int, wg *sync.WaitGroup) {
 
 			// 结算逻辑
 			/*
-			place
-			[OutcomeId:"31479043"  Odds:"1.75" OutcomeId:"28097385"  Odds:"1.59" OutcomeId:"31752164"  Odds:"1.01"]
+				place
+				[OutcomeId:"31479043"  Odds:"1.75" OutcomeId:"28097385"  Odds:"1.59" OutcomeId:"31752164"  Odds:"1.01"]
 			*/
 			var verify settleVerify
-			for i := 0; i < len(place); i ++{
+			for i := 0; i < len(place); i++ {
 				var state settleDetail
 				rand.Seed(time.Now().Unix())
 				ra := resultAction[rand.Intn(len(resultAction))]
@@ -685,7 +688,7 @@ func getMarketsDetail(index int, match []int, wg *sync.WaitGroup) {
 
 			}
 			// 投注并结算一组后写入redis
-			handlerExpect(verify,  len(place))
+			handlerExpect(verify, len(place))
 		}
 	}
 	log.Printf("go程-[%d] 完成任务 \n", index)
@@ -717,9 +720,9 @@ func removeDuplicateElement(languages []string) []int {
 	return result
 }
 
-func assembleSecondData(index int, mid string) (response *request.MatchAndMarketResponse) {
+func assembleSecondData(index int, mid string) (response *protouse.MatchAndMarketResponse) {
 	// 根据matchIds Get Match Detail Response
-	var FilterRequest = &request.FilterRequest{
+	var FilterRequest = &protouse.FilterRequest{
 		MatchIds: []string{mid},
 	}
 	b, err := proto.Marshal(FilterRequest)
@@ -731,7 +734,7 @@ func assembleSecondData(index int, mid string) (response *request.MatchAndMarket
 	return response
 }
 
-func assembleFirstData(mid string) (response *request.MatchAndMarketResponse) {
+func assembleFirstData(mid string) (response *protouse.MatchAndMarketResponse) {
 	allMatchId := make([]int, 0)
 	var works [5]works
 	for i := 0; i < 5; i++ {
@@ -739,14 +742,14 @@ func assembleFirstData(mid string) (response *request.MatchAndMarketResponse) {
 	}
 	for i := 0; i < 5; i++ {
 		works[i].in <- 100
-		var FilterRequest = &request.FilterRequest{
+		var FilterRequest = &protouse.FilterRequest{
 			IsLive:          1,
 			MatchIds:        []string{},
-			MarketGroupType: request.MarketGroupType(i + 2),
+			MarketGroupType: protouse.MarketGroupType(i + 2),
 			MarketTypes:     []uint32{},
 			SportIds:        []uint32{1},
 			Times:           []*timestamp.Timestamp{},
-			Pager:           &request.Pager{Page: 1, PageSize: 40},
+			Pager:           &protouse.Pager{Page: 1, PageSize: 40},
 		}
 		b, err := proto.Marshal(FilterRequest)
 		if err != nil {
@@ -777,7 +780,7 @@ func assembleFirstData(mid string) (response *request.MatchAndMarketResponse) {
 	return response
 }
 
-func responseHandle(index int, MatchId string) (response *request.MatchAndMarketResponse) {
+func responseHandle(index int, MatchId string) (response *protouse.MatchAndMarketResponse) {
 	// 获取Match List Response get matchIds
 	if MatchId == "" {
 		response = assembleFirstData(MatchId)

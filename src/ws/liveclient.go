@@ -1,9 +1,12 @@
 package main
 
 import (
+	"embed"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
+	"github.com/kirinlabs/HttpRequest"
+	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -34,30 +37,40 @@ const (
 )
 
 var (
+	//go:embed data.json
+	f embed.FS
+)
+
+var (
 	wgLive = sync.WaitGroup{}
 	//num         int64 = 2
+	sTime            int64
+	eTime            int64
+	useTime1         int64
+	useTime2         int64
+	useTime3         int64
 	okNumLive        int64 = 0
-	firstOkNumLive   int64
-	secondOkNumLive  int64
-	thirdOkNumLive   int64
+	firstOkNumLive   int64 //第一轮请求成功数
+	secondOkNumLive  int64 //第二轮请求成功数
+	thirdOkNumLive   int64 //第三轮请求成功数
 	channelLive      = make(chan int64)
 	resTimeLiveList  []int
-	resTimeLiveList1 []int
-	resTimeLiveList2 []int
-	resTimeLiveList3 []int
+	resTimeLiveList1 []int //第一轮响应时间
+	resTimeLiveList2 []int //第二轮响应时间
+	resTimeLiveList3 []int //第三轮响应时间
 	lockLive               = sync.Mutex{}
 	iLive            int64 = 0
-	iLiveFirst       int64
-	iLiveSecond      int64
-	iLiveThird       int64
+	iLiveFirst       int64 //第一轮请求数
+	iLiveSecond      int64 //第二轮请求数
+	iLiveThird       int64 //第三轮请求数
 	doneLive1        = make(chan struct{})
 	//resTime     int64
-	oneLive        int64
-	twoLive        int64
-	threeLive      int64
-	firstLive      int64
-	secondLive     int64
-	thirdLive      int64
+	oneLive        int64 //第一轮并发数
+	twoLive        int64 //第二轮并发数
+	threeLive      int64 //第三轮并发数
+	firstLive      int64 //第一轮运行时长
+	secondLive     int64 //第二轮运行时长
+	thirdLive      int64 //第三轮运行时长
 	connectLiveNum int64 = 0
 	token          string
 	uid            string
@@ -70,7 +83,8 @@ var (
 	avatar         string
 	phone          string
 
-	hashChan = make(chan string)
+	hashChan  = make(chan string)                 //注册hash
+	tokenChan = make(chan map[string]interface{}) //登陆token
 )
 
 func maxRespTimeLive(resTimeLiveList []int) int {
@@ -110,11 +124,13 @@ func ninetyRespTime(resTimeLiveList []int) int {
 }
 
 func printTimeLive(usetime int64, count int64, iLive int64, okNumLive int64, resTimeLiveList []int) {
+	fmt.Println(len(resTimeLiveList))
 	fmt.Println("并发数：", count)
-	fmt.Println("请求数: ", iLive-count)
-	fmt.Println("成功的数量：", okNumLive)
-	fmt.Printf("失败的数量：%v \n", iLive-count-okNumLive)
-	fmt.Println(fmt.Sprintf("耗时: %v秒", float64(usetime)/1e6))
+	fmt.Println("请求数: ", iLive)
+	fmt.Println("成功的数量：", len(resTimeLiveList))
+	fmt.Printf("\033[31m失败的数量：%v\033[0m \n", int(iLive)-len(resTimeLiveList))
+	fmt.Printf("\033[31m失败率：%.2f%v\033[0m \n", float64(int(iLive)-len(resTimeLiveList))/float64(iLive)*100, "%")
+	fmt.Println(fmt.Sprintf("耗时: %v秒", float64(usetime)/1000))
 	fmt.Printf("最大响应时间：%.3f秒 \n", float64(maxRespTimeLive(resTimeLiveList))/1e6)
 	fmt.Printf("最小响应时间：%.3f微秒 ≈ %v秒 \n", float64(minRespTimeLive(resTimeLiveList)), float64(minRespTimeLive(resTimeLiveList))/1e6)
 	fmt.Println("50%用户响应时间: " + fmt.Sprintf("%.3f微秒 ≈ %v秒", float64(fiftyRespTime(resTimeLiveList)), float64(fiftyRespTime(resTimeLiveList))/1e6))
@@ -122,60 +138,59 @@ func printTimeLive(usetime int64, count int64, iLive int64, okNumLive int64, res
 	fmt.Printf("平均响应时间是:%.3f秒 \n", float64(sumResTimeLive(resTimeLiveList))/float64(iLive)/1e6)
 	fmt.Printf("QPS：%.3f \n", float64(count)/(float64(sumResTimeLive(resTimeLiveList))/float64(iLive)/1e6))
 }
+
 func runLive() {
-	fmt.Println(fmt.Sprintf("***首轮并发用户为%v***", oneLive))
-	fsT := time.Now().UnixNano() / 1e6
+	fmt.Println("第一轮压测开始...")
+	fmt.Println(fmt.Sprintf("***首轮并发用户为%v协程***", oneLive))
 	wgLive.Add(int(oneLive))
 	for i := 0; i < int(oneLive); i++ {
+		//go loginSetUp(i)
 		go liveSend(firstLive, i)
 	}
 	wgLive.Wait()
-	feT := time.Now().UnixNano() / 1e6
 	iLiveFirst = iLive
 	firstOkNumLive = okNumLive
 	resTimeLiveList1 = resTimeLiveList
-	fmt.Println("***第一轮压测结果***")
-	printTimeLive(feT-fsT, oneLive, iLiveFirst, firstOkNumLive, resTimeLiveList1)
+	useTime1 = eTime - sTime
+	fmt.Println("第二轮压测开始...")
 	fmt.Println(fmt.Sprintf("***10秒后加压至%v协程***", twoLive))
 	<-time.After(10 * time.Second)
-	seSt := time.Now().UnixNano() / 1e6
 	wgLive.Add(int(twoLive))
 	for i := 0; i < int(twoLive); i++ {
+		//go loginSetUp(i)
 		go liveSend(secondLive, i)
 	}
 	wgLive.Wait()
-	seEd := time.Now().UnixNano() / 1e6
 	iLiveSecond = iLive - iLiveFirst
 	secondOkNumLive = okNumLive - firstOkNumLive
 	resTimeLiveList2 = resTimeLiveList[len(resTimeLiveList1):]
-	fmt.Println("***第二轮压测结果***")
-	printTimeLive(seEd-seSt, twoLive, iLiveSecond, secondOkNumLive, resTimeLiveList2)
+	useTime2 = eTime - sTime
+	fmt.Println("第三轮压测开始...")
 	fmt.Println(fmt.Sprintf("***10秒后加压至%v协程***", threeLive))
 	<-time.After(10 * time.Second)
-	thSt := time.Now().UnixNano() / 1e6
 	wgLive.Add(int(threeLive))
 	for i := 0; i < int(threeLive); i++ {
+		//go loginSetUp(i)
 		go liveSend(thirdLive, i)
 	}
 	wgLive.Wait()
-	thEt := time.Now().UnixNano() / 1e6
 	iLiveThird = iLive - iLiveFirst - iLiveSecond
 	thirdOkNumLive = okNumLive - firstOkNumLive - secondOkNumLive
 	resTimeLiveList3 = resTimeLiveList[len(resTimeLiveList1)+len(resTimeLiveList2):]
-	fmt.Println("***第三轮压测结果***")
-	printTimeLive(thEt-thSt, threeLive, iLiveThird, thirdOkNumLive, resTimeLiveList3)
+	useTime3 = eTime - sTime
+	fmt.Println("\033[33m***第一轮压测结果***\033[0m")
+	printTimeLive(useTime1, oneLive, iLiveFirst, firstOkNumLive, resTimeLiveList1)
+	fmt.Println("\033[35m----------------------- \033[0m")
+	fmt.Println("\033[33m***第二轮压测结果***\033[0m")
+	printTimeLive(useTime2, twoLive, iLiveSecond, secondOkNumLive, resTimeLiveList2)
+	fmt.Println("\033[35m----------------------- \033[0m")
+	fmt.Println("\033[33m***第三轮压测结果***\033[0m")
+	printTimeLive(useTime3, threeLive, iLiveThird, thirdOkNumLive, resTimeLiveList3)
+	fmt.Println("\033[35m----------------------- \033[0m")
 }
 
 func main() {
 
-	//byteData, err := ioutil.ReadFile(path)
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
-	//err1 := json.Unmarshal(byteData, &userData)
-	//if err1 != nil {
-	//	fmt.Println(err1)
-	//}
 	//login()
 	//byteData1, err := ioutil.ReadFile(path)
 	//if err != nil {
@@ -217,11 +232,20 @@ func main() {
 	//flag.Int64Var(&thirdLive, "threeLiveTime", 100, "第三轮压测运行时长(秒)")
 	//flag.Parse()
 
-	byteData1, err := ioutil.ReadFile(path)
+	//byteData1, err := f.ReadFile("data.json")
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
+	//err1 := json.Unmarshal(byteData1, &userData)
+	//if err1 != nil {
+	//	fmt.Println(err1)
+	//}
+
+	byteData, err := ioutil.ReadFile(path)
 	if err != nil {
 		fmt.Println(err)
 	}
-	err1 := json.Unmarshal(byteData1, &userData)
+	err1 := json.Unmarshal(byteData, &userData)
 	if err1 != nil {
 		fmt.Println(err1)
 	}
@@ -238,14 +262,16 @@ func main() {
 	_, _ = fmt.Scan(&threeLive)
 	fmt.Println("第三轮运行时长(秒): ")
 	_, _ = fmt.Scan(&thirdLive)
-	sTime := time.Now().UnixNano() / 1e6
+	s1 := time.Now().UnixNano() / 1e6
 	runLive()
-	eTime := time.Now().UnixNano() / 1e6
-	fmt.Println(fmt.Sprintf("总耗时：%v秒", float64(eTime-sTime)/1000-(10+10)))
-	fmt.Println("总并发数：", oneLive+twoLive+threeLive)
-	fmt.Println("总请求数: ", iLive-(oneLive+twoLive+threeLive))
+	e1 := time.Now().UnixNano() / 1e6
+	fmt.Println("**********")
+	fmt.Println(fmt.Sprintf("总耗时：%v秒", float64(e1-s1)/1000-(10+10)))
+	//fmt.Println("总并发数：", oneLive+twoLive+threeLive)
+	//fmt.Println("总请求数: ", iLive-(oneLive+twoLive+threeLive))
 	//fmt.Printf("成功的数量：%v \n", okNumLive)
-	//fmt.Printf("失败的数量：%v \n", iLive-(oneLive+twoLive+threeLive)-okNumLive)
+	//fmt.Printf("\033[31m失败的数量：%v\033[0m \n", iLive-(oneLive+twoLive+threeLive)-okNumLive)
+	//fmt.Printf("\033[31m总失败率：%.2f%v\033[0m \n", float64(iLive-(oneLive+twoLive+threeLive)-okNumLive)/float64(iLive-(oneLive+twoLive+threeLive))*100, "%")
 	//fmt.Printf("最小响应时间：%.3f微秒 \n", float64(minRespTimeLive()))
 	//fmt.Printf("最大响应时间：%.3f秒 \n", float64(maxRespTimeLive())/1e6)
 	//fmt.Println("50%用户响应时间: " + fmt.Sprintf("%.3f秒", float64(fiftyRespTime())/1e6))
@@ -255,6 +281,30 @@ func main() {
 	defer runtime.GC()
 }
 
+func loginSetUp(i int) {
+	defer func() {
+		err := recover()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}()
+	req := HttpRequest.NewRequest()
+	reqUrl := loginUrl
+	payLoad := make(map[string]interface{})
+	payLoad["account"] = userData[i]["account"]
+	payLoad["login_type"] = loginType
+	payLoad["platform"] = platForm
+	payLoad["pwd"] = userData[i]["pwd"]
+	res, _ := req.JSON().Post(reqUrl, payLoad)
+	defer res.Close()
+	body, _ := res.Body()
+	chMap := make(map[string]interface{})
+	chMap["token"] = gjson.ParseBytes(body).Map()["data"].Map()["token"].String()
+	chMap["id"] = gjson.ParseBytes(body).Map()["data"].Map()["id"].String()
+	chMap["nick_name"] = gjson.ParseBytes(body).Map()["data"].Map()["nick_name"].String()
+	chMap["avatar"] = gjson.ParseBytes(body).Map()["data"].Map()["avatar"].String()
+	tokenChan <- chMap
+}
 func liveSend(times int64, i int) {
 	defer func() {
 		err5 := recover()
@@ -262,15 +312,14 @@ func liveSend(times int64, i int) {
 			log.Println("捕获的异常：", err5)
 		}
 	}()
-	sT := time.Now().UnixNano() / 1e6
+	//chMap := <-ch
+	sTime = time.Now().UnixNano() / 1e6
 	liveData := make(map[string]interface{})
 	liveData["type"] = wsType
 	liveData["client_name"] = userData[i]["nick_name"]
 	liveData["room_id"] = roomId
-
 	userId, _ := strconv.Atoi(userData[i]["id"])
 	liveData["user_id"] = userId
-	fmt.Println(userId)
 	liveData["avatar"] = userData[i]["avatar"]
 	liveData["token"] = userData[i]["token"]
 	liveData["platform"] = platForm
@@ -301,7 +350,7 @@ func liveSend(times int64, i int) {
 		sendD["type"] = sendDataType
 		sendD["content"] = contentlist[source.Intn(5)]
 		sendBs, _ := json.Marshal(&sendD)
-		sTime := time.Now().UnixNano() / 1e3
+		s := time.Now().UnixNano() / 1e3
 		err8 := ws.WriteMessage(websocket.BinaryMessage, sendBs)
 		log.Println(`发送聊天信息：`, string(sendBs))
 		if err8 != nil {
@@ -312,8 +361,8 @@ func liveSend(times int64, i int) {
 		if err3 != nil {
 			log.Println("接收数据异常", err3)
 		}
-		eT := time.Now().UnixNano() / 1e6
-		if eT-sT > times*1000 {
+		eTime = time.Now().UnixNano() / 1e6
+		if eTime-sTime > times*1000 {
 			break
 		}
 		var resMsg map[string]interface{}
@@ -322,14 +371,14 @@ func liveSend(times int64, i int) {
 			log.Println("解析返回数据异常：", err4)
 		}
 		log.Println(`服务端返回：`, string(recv))
-		eTime := time.Now().UnixNano() / 1e3
+		e := time.Now().UnixNano() / 1e3
 		if string(recv) != "" {
 			atomic.AddInt64(&okNumLive, 1)
 		} else {
 			fmt.Println("接收服务端返回数据异常：", string(recv))
 		}
 		lockLive.Lock()
-		resTimeLiveList = append(resTimeLiveList, int(eTime-sTime))
+		resTimeLiveList = append(resTimeLiveList, int(e-s))
 		lockLive.Unlock()
 	}
 	//channelLive <- eTime - sTime

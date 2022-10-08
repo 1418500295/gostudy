@@ -1,7 +1,7 @@
 syntax = "proto3";
 package settle;
-option go_package = "/proto";
-import "google/protobuf/timestamp.proto";
+option go_package = "/protos";
+import "timestamp.proto";
 
 
 enum SettleAction {

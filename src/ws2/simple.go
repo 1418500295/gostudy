@@ -33,7 +33,7 @@ const (
 	platForm        = 0
 	loginType       = 1
 	loginUrl        = "https://api.mliveplus.com/api/user/login"
-	orderUrl        = "https://api.mliveplus.com/api/charge/orderList"
+	orderUrl        = "https://ycapi.mliveplus.com/api/charge/orderList"
 	withDrawsUrl    = "https://api.mliveplus.com/api/withdraw/withdraws"
 	getSpendListUrl = "https://api.mliveplus.com/api/order/getSpendList"
 	getLiveUrl      = "https://api.mliveplus.com/webapi/live/getLivePageData"
@@ -49,21 +49,21 @@ var (
 )
 var (
 	wg              = sync.WaitGroup{}
-	num             int64
-	okNumLive       int64 = 0
+	num             int64     //并发数
+	okNumLive       int64 = 0 //成功的请求数
 	channelLive           = make(chan int64)
 	resTimeLiveList []int
 	lockLive              = sync.Mutex{}
 	iLive           int64 = 0
 	doneLive1             = make(chan struct{})
 	//resTime     int64
-	oneLive        int64
-	twoLive        int64
-	threeLive      int64
-	firstLive      int64
-	secondLive     int64
-	thirdLive      int64
-	connectLiveNum int64 = 0
+	oneLive        int64     //第一轮并发数
+	twoLive        int64     //第一轮并发数
+	threeLive      int64     //第一轮并发数
+	firstLive      int64     //第一轮压测时长
+	secondLive     int64     //第二轮压测时长
+	thirdLive      int64     //第三轮压测时长
+	connectLiveNum int64 = 0 //ws连接数
 	token          string
 	uid            string
 	nickName       string
@@ -75,8 +75,9 @@ var (
 	avatar         string
 	phone          string
 
-	hashChan  = make(chan string)
-	tokenChan = make(chan map[string]interface{})
+	hashChan  = make(chan string)                 //注册hash
+	tokenChan = make(chan map[string]interface{}) //登陆token
+
 )
 
 func maxRespTimeLive() int {
@@ -161,6 +162,7 @@ func loginExe() {
 	case <-time.After(time.Duration(30) * time.Second):
 		fmt.Println("***任务处理超时***")
 	}
+
 }
 func runLive(funName func(chan map[string]interface{})) {
 	done := make(chan struct{})
@@ -223,7 +225,8 @@ func main() {
 	fmt.Println("总并发数：", num)
 	fmt.Println("总请求数: ", num)
 	fmt.Printf("成功的数量：%v \n", okNumLive)
-	fmt.Printf("失败的数量：%v \n", num-okNumLive)
+	fmt.Printf("\033[31m失败的数量：%v\033[0m \n", num-okNumLive)
+	fmt.Printf("\033[31m失败率：%.2f%v\033[0m \n", float64(num-okNumLive)/float64(num)*100, "%")
 	fmt.Printf("最小响应时间：%.3f微秒 ≈ %v秒 \n", float64(minRespTimeLive()), float64(minRespTimeLive())/1e6)
 	fmt.Printf("最大响应时间：%.3f秒 \n", float64(maxRespTimeLive())/1e6)
 	fmt.Println("50%用户响应时间: " + fmt.Sprintf("%.3f微秒 ≈ %v秒", float64(fiftyRespTime()), float64(fiftyRespTime())/1e6))

@@ -22,7 +22,7 @@ type Huawei struct {
 比如上面的Dog类型要赋值给Animal，必须使用指针，因为Dog实现speak方法用了指针接受者
 2.如果全部方法都使用的是值接受者，那给interface变量赋值的时候用值或者指针都可以
 */
-func (huawei Huawei) call() {
+func (huawei *Huawei) call() {
 	fmt.Printf("%s有打电话功能", huawei.name)
 }
 

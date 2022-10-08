@@ -3,7 +3,7 @@ syntax = "proto3";
 package localization;
 option go_package = ".;localization";
 
-import "cd.codes/v4/armory/feedApi/grpc.proto";
+//import "cd.codes/v4/armory/feedApi/grpc.proto";
 
 enum LangType {
   LangType_Sport = 0;
@@ -139,13 +139,13 @@ message SearchDefaultResp {
 }
 
 // ============================= search event =============================
-message SearchEventReq {
-  int32 type = 1;
-  int32 sportId = 2;
-  repeated string ids = 3;
-  string lang = 4;
-  feedApiProto.FilterRequest Filter = 5;
-}
+//message SearchEventReq {
+//  int32 type = 1;
+//  int32 sportId = 2;
+//  repeated string ids = 3;
+//  string lang = 4;
+//  FilterRequest Filter = 5;
+//}
 
 message SearchEventList {
   repeated string matchIds = 1;

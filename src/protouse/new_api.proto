@@ -376,6 +376,7 @@ message Response {
 message SelectionList {
   string OutcomeId = 1;
   string Odds = 2;
+  string MarketId = 3;
 }
 message MultiLineDetail {
   OrderType Type = 1;
@@ -500,12 +501,24 @@ message SearchEventMatchResponse {
   MatchAndMarketResponse result = 2;
 }
 
+message BetSlipRefreshRequest{
+  repeated string OutcomeIds = 1;
+  repeated string MarketIds = 2;
+  Pager Pager = 3;
+
+}
 message BetSlipRefreshResponse{
   ResponseStatus Status = 1;
-  BetDataResponse BetDataResponse = 2;
+  BetSlipDataResponse BetSlipDataResponse = 2;
 }
-
-message BetSlipRefreshRequest{ 
-  repeated string OutcomeIds = 2;
-  Pager Pager = 3;
+message BetSlipDataResponse {
+  repeated Outcome Outcomes = 1;
+  repeated Market Markets = 2;
+  repeated Matches Matches = 3;
+  repeated Season Seasons = 4;
+  repeated Tournament Tournaments = 5;
+}
+message Matches {
+  Match Match = 1;
+  int32 MarketCount = 2;
 }

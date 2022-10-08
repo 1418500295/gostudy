@@ -3,10 +3,10 @@ package sportBookProto;
 
 option go_package = ".;sportBookProto";
 
-import "cd.codes/core/micro_common/src/cliTools/clickhouseModelBuilder/sportdbV4/proto/sportdbV4.proto";
-import "cd.codes/v4/armory/common/common.proto";
-import "cd.codes/v4/armory/feedApi/grpc.proto";
-import "cd.codes/core/micro_common/src/protobuf/dataTypes/dataTypes.proto";
+import "cd.codes/core/micro_common/src/cliTools/clickhouseModelBuilder/sportdbV4/protos/sportdbV4.protos";
+import "cd.codes/v4/armory/common/common.protos";
+import "cd.codes/v4/armory/feedApi/grpc.protos";
+import "cd.codes/core/micro_common/src/protobuf/dataTypes/dataTypes.protos";
 import "google/protobuf/timestamp.proto";
 
 enum ResponseStatus {
@@ -355,8 +355,8 @@ message BetSlipDataResponse {
   repeated Outcome Outcomes = 1;
   repeated Market Markets = 2;
   repeated Matches Matches = 3;
-  repeated modelProtoInsportdbV4.Season Seasons = 4;
-  repeated modelProtoInsportdbV4.Tournament Tournaments = 5;
+  repeated Season Seasons = 4;
+  repeated Tournament Tournaments = 5;
 }
 
 message BetSlipRefreshResponse{

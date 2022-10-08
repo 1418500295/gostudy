@@ -15,7 +15,9 @@
         <method importPath="math/rand" receiver="*Rand" name="Read" />
         <method importPath="github.com/kirinlabs/HttpRequest" receiver="*Response" name="Close" />
         <method importPath="os" receiver="*File" name="Close" />
+        <method importPath="github.com/gorilla/websocket" receiver="*Conn" name="Close" />
       </methods>
     </inspection_tool>
+    <inspection_tool class="GoVetCopyLock" enabled="false" level="WARNING" enabled_by_default="false" />
   </profile>
 </component>

@@ -1,7 +1,8 @@
 syntax = "proto3";
 package feedApiProto;
-import "google/protobuf/timestamp.proto";
-
+//import "google/protobuf/timestamp.proto";
+import "timestamp.proto";
+option go_package = "./";
 enum MessageType {
   UpdateMatch = 0;
   BetStop = 1;

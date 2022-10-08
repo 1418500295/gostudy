@@ -2,22 +2,28 @@ package utils
 
 import (
 	"bufio"
+	"embed"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"os"
-	"path/filepath"
 	"strings"
 )
 
-func filePath() string {
-	path, err := os.Getwd()
-	if err != nil {
-		fmt.Println(err)
-	}
-	return strings.Trim(strings.SplitAfter(path, "gostudy")[0], " ")
-}
+var (
+	//go:embed host.properties
+	//go:embed testdata/*
+	f embed.FS
+)
+
+//func filePath() string {
+//	path, err := os.Getwd()
+//	if err != nil {
+//		fmt.Println(err)
+//	}
+//	return strings.Trim(strings.SplitAfter(path, "gostudy")[0], " ")
+//}
+
 func GetTestData(fileName string, caseIndex int) map[string]interface{} {
 	defer func() {
 		err3 := recover()
@@ -29,12 +35,13 @@ func GetTestData(fileName string, caseIndex int) map[string]interface{} {
 	//if err != nil {
 	//	fmt.Println(err)
 	//}
-	file, err := os.Open(filepath.Join(filePath(), "/src/testdata/", fileName))
+	//file, err := f.Open(filepath.Join(filePath(), "/src/utils/testdata/", fileName))
+	file, err := f.Open("testdata/" + fileName)
 
 	if err != nil {
 		fmt.Println(err)
 	}
-	defer file.Close()
+	//defer file.Close()
 	reader := bufio.NewReader(file)
 	var chunks []byte
 	buf := make([]byte, 1024)
@@ -64,8 +71,9 @@ func GetApiUrl(urlName string) string {
 			fmt.Println("捕获到异常: ", err)
 		}
 	}()
-	files, err1 := os.Open(filepath.Join(filePath(), "/src/host.properties"))
-	defer files.Close()
+	//files, err1 := os.Open(filepath.Join(filePath(), "/src/utils/host.properties"))
+	files, err1 := f.Open("host.properties")
+	//defer files.Close()
 	if err1 != nil {
 		fmt.Println(err1)
 	}

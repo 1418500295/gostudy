@@ -346,7 +346,7 @@ func BetHistory(times int64) {
 		}
 		//fmt.Println(betHistoryReq)
 		byteS, _ := proto.Marshal(betHistoryReq)
-		reqUrl := "http://sports.aisport.live/api/v4/bet_history"
+		reqUrl := "http:/"
 		req := HttpRequest.NewRequest()
 		headers := make(map[string]string)
 		headers["lang"] = "zh"
@@ -405,7 +405,7 @@ func Balance(times int64) {
 	}()
 	sT = time.Now().UnixNano() / 1e6
 	for true {
-		reqUrl := "http://sports.aisport.live/api/v4/balance"
+		reqUrl := "http:/"
 		req := HttpRequest.NewRequest()
 		headers := make(map[string]string)
 		headers["Authorization"] = token
@@ -469,7 +469,7 @@ func Bet(times int64) {
 		}
 		//fmt.Println(placeBetReq)
 		byteS, _ := proto.Marshal(placeBetReq)
-		reqUrl := "https://sports.aisport.live/api/v4/bet"
+		reqUrl := "https://"
 		req := HttpRequest.NewRequest()
 		headers := make(map[string]string)
 		headers["Content-Type"] = "application/x-www-form-urlencoded, application/protobuf;proto=sportBookProto.PlaceBetRequest"
@@ -528,7 +528,7 @@ func TransactionHistory(times int64) {
 			},
 		}
 		byteS, _ := proto.Marshal(transactionHistoryReq)
-		reqUrl := "http://sports.aisport.live/api/v4/transaction_history"
+		reqUrl := "http:/"
 		req := HttpRequest.NewRequest()
 		headers := make(map[string]string)
 		headers["Content-Type"] = "application/x-www-form-urlencoded, application/protobuf;protos=sportBookProto.TransactionHistoryRequest"
@@ -590,7 +590,7 @@ func BetSlipOdds(times int64) {
 		//data := make(map[string]interface{})
 		//data["OutcomeIds"] = "9997088"
 		//data["MarketIds"] = "9997079"
-		reqUrl := "http://sport.aisport.live/api/v4/bet_slip_odds"
+		reqUrl := "http:/"
 		req := HttpRequest.NewRequest()
 		headers := make(map[string]string)
 		headers["Content-Type"] = "application/x-www-form-urlencoded, application/protobuf;protos=sportBookProto.BetSlipRefreshRequest"
@@ -655,7 +655,7 @@ func BetLimit(times int64) {
 		//data := make(map[string]interface{})
 		//data["OutcomeIds"] = "9997088"
 		//data["MarketIds"] = "9997079"
-		reqUrl := "http://sports.aisport.live/api/v4/bet_limit"
+		reqUrl := "http"
 		req := HttpRequest.NewRequest()
 		headers := make(map[string]string)
 		headers["Content-Type"] = "application/x-www-form-urlencoded, application/protobuf;protos=sportBookProto.PlaceBetRequest"
@@ -701,7 +701,7 @@ func SearchDefault(times int64) {
 	}()
 	sT = time.Now().UnixNano() / 1e6
 	for {
-		reqUrl := "http://sports.aisport.live/api/v4/search/new/default"
+		reqUrl := "http"
 		req := HttpRequest.NewRequest()
 		headers := make(map[string]string)
 		headers["Authorization"] = token
@@ -762,7 +762,7 @@ func Search(times int64) {
 			Keyword: "足球",
 		}
 		bs, _ := proto.Marshal(&reqData)
-		reqUrl := "http://sports.aisport.live/api/v4/search"
+		reqUrl := "http:"
 		req := HttpRequest.NewRequest()
 		headers := make(map[string]string)
 		headers["Authorization"] = token

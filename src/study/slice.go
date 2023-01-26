@@ -14,4 +14,7 @@ func main() {
 	////从尾部删除元素
 	//a = a[:len(a)-1] // 删除尾部1个元素
 	//a = a[:len(a)-N] // 删除尾部N个元素
+	
+		//sort.Sort(sort.Reverse(sort.StringSlice(kStr)))  //倒序排序
+
 }

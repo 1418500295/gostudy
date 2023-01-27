@@ -31,4 +31,14 @@ func main() {
 	//
 	//uint64转成string(16进制)
 	//string := strconv.FormatUint(uint64, 16)
+	
+	
+	a := "阿斯顿发生sdgd"
+	for i := 0; i < len([]rune(a)); i++ {
+		fmt.Println(string([]rune(a)[i]))
+	}
+
+	for _, v := range a {
+		fmt.Println(string(v))
+	}
 }

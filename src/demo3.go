@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/kirinlabs/HttpRequest"
+	"github.com/liushuochen/gotable"
 	"github.com/marusama/cyclicbarrier"
+	"net"
+	"net/http"
 	"runtime"
 	"strconv"
 	"sync"
@@ -18,16 +21,17 @@ const num = 5
 
 var et int64
 var st int64
-var token3 = "..5yx8ENOZ02yKJCgq2Ltrp0zpknQpRzI6yS2wAAzcDgE"
-var reqUrl = ""
 
+// var token3 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJnbGVuIiwianRpIjoiMTExMyIsImlzcyI6IjkiLCJzdWIiOiI1In0.ahell126w-DnIiiAGilvQettJ3IM1vUp-D06vkWDD7s"
+var reqUrl = "https://test-www.vipsroom.net/api/scene/convert/chips/start/work/list"
 var resTime int64
 var chanResTime chan int64
 var resTimeList []int64
-var rTimeChan = make(chan int64, 100000)
+var rTimeChan = make(chan int64, 100000) //创建响应数据收集缓冲区
 var sucNum int64
 var failNum int64
 var lock sync.Mutex
+var useTime int64
 
 func avgResTime(timeList []int64) float64 {
 	sum := 0
@@ -51,13 +55,29 @@ var reqData = map[string]interface{}{
 	"member_code":           "",
 	"page":                  1,
 	"size":                  10,
-	"start_work_start_time": time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.Now().Location()).Unix(),
-	"start_work_end_time":   time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 23, 59, 59, 0, time.Now().Location()).Unix(),
+	"start_work_start_time": nil,
+	"start_work_end_time":   nil,
+	//"start_work_start_time": time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.Now().Location()).Unix(),
+	//"start_work_end_time":   time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 23, 59, 59, 0, time.Now().Location()).Unix(),
 }
 var headers = map[string]string{
-	"t": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVC.",
+	"t": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJnbGVuIiwianRpIjoiMTExMyIsImlzcyI6IjkiLCJzdWIiOiI1In0.ahell126w-DnIiiAGilvQettJ3IM1vUp-D06vkWDD7s",
 }
+var transPort *http.Transport
 
+func init() {
+	transPort = &http.Transport{
+		DialContext: (&net.Dialer{
+			Timeout:   60 * time.Second,
+			KeepAlive: 60 * time.Second,
+			DualStack: true,
+		}).DialContext,
+		MaxIdleConns:          1000000,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   5 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	}
+}
 func (requests *Requests) execute(i int, times int64) {
 	defer func() {
 		if err := recover(); err != nil {
@@ -67,12 +87,12 @@ func (requests *Requests) execute(i int, times int64) {
 			fmt.Printf("safe go: %v\n%v\n", err, *(*string)(unsafe.Pointer(&buf)))
 		}
 	}()
-	st = time.Now().Unix()
+	st = time.Now().UnixMilli()
 	for true {
-		req := HttpRequest.NewRequest()
+		//req := HttpRequest.NewRequest()
 		//headers := map[string]string{"t": token3}
 		var err error
-		res, err := req.SetHeaders(requests.headers).JSON().Post(requests.url, requests.data)
+		res, err := HttpRequest.Transport(transPort).SetHeaders(requests.headers).JSON().Post(requests.url, requests.data)
 		if err != nil {
 			fmt.Printf("请求异常：%v\n", err)
 		} else {
@@ -83,8 +103,7 @@ func (requests *Requests) execute(i int, times int64) {
 				}
 				return rTime
 			}
-			resTime, err = strconv.ParseInt(resT(), 10, 64)
-			if err != nil {
+			if resTime, err = strconv.ParseInt(resT(), 10, 64); err != nil {
 				fmt.Printf("响应时间转换异常：%v\n", err)
 			} else {
 				rTimeChan <- resTime
@@ -92,7 +111,7 @@ func (requests *Requests) execute(i int, times int64) {
 				//resTimeList = append(resTimeList, resTime)
 				//lock.Unlock()
 				body, _ := res.Body()
-				fmt.Printf("第%d协程请求返回:%s\n", i, string(body))
+				//fmt.Printf("第%d协程请求返回:%s\n", i, string(body))
 				var resMap map[string]interface{}
 				err = json.Unmarshal(body, &resMap)
 				if err != nil {
@@ -104,8 +123,8 @@ func (requests *Requests) execute(i int, times int64) {
 						atomic.AddInt64(&failNum, 1)
 					}
 					defer res.Close()
-					et = time.Now().Unix()
-					if et-st > times {
+					et = time.Now().UnixMilli()
+					if et-st > times*1000 {
 						break
 					}
 					continue
@@ -132,7 +151,7 @@ func (requests *Requests) run(num int, executeTimes int64, countDown *sync.WaitG
 		go func(i int) {
 			control.Wait() //开启阀门，阻塞子协程执行
 			requests.execute(i, executeTimes)
-			err := barrier.Await(context.Background()) //同步屏障触发点
+			err := barrier.Await(context.Background()) //同步集合点
 			if err != nil {
 				return
 			}
@@ -144,9 +163,9 @@ func (requests *Requests) run(num int, executeTimes int64, countDown *sync.WaitG
 	fmt.Println("------执行开始------")
 	control.Done() //关闭阀门
 	go func() {
-		countDown.Wait() //所有子协程执行完毕
+		countDown.Wait() //等待所有子协程执行完毕
 		singleChan <- struct{}{}
-		close(rTimeChan)
+		close(rTimeChan) //关闭数据收集通道
 	}()
 	select {
 	case <-singleChan:
@@ -157,17 +176,34 @@ func (requests *Requests) run(num int, executeTimes int64, countDown *sync.WaitG
 	for ch := range rTimeChan {
 		resTimeList = append(resTimeList, ch)
 	}
-	fmt.Println("------执行结束------")
-	fmt.Println("成功的请求数：", sucNum)
-	fmt.Println("失败的请求数：", failNum)
-	fmt.Printf("平均响应时间：%.3f毫秒", avgResTime(resTimeList))
+	//fmt.Println("------执行结束------")
+	//fmt.Println("成功的请求数：", sucNum)
+	//fmt.Println("失败的请求数：", failNum)
+	//fmt.Printf("平均响应时间：%.3f毫秒", avgResTime(resTimeList))
+
+}
+
+func printTable() {
+	table, err := gotable.Create("耗时", "总并发数", "成功的请求数", "失败的请求数", "平均响应时间")
+	if err != nil {
+		fmt.Println(err)
+	}
+	useTime = et - st
+	table.AddRow([]string{fmt.Sprintf("%.1f", float64(useTime/1000)),
+		strconv.Itoa(num), strconv.FormatInt(sucNum, 10),
+		strconv.FormatInt(failNum, 10),
+		fmt.Sprintf("%.3f", avgResTime(resTimeList)/1000),
+	})
+	fmt.Println(table)
 
 }
 func main() {
+	//fmt.Println(utils.Md5ToStr("OK6802"))
 	countDown := &sync.WaitGroup{}
 	control := &sync.WaitGroup{}
 	singleChan := make(chan struct{})
 	//account1.StartWork()
 	this := Requests{headers: headers, url: reqUrl, data: reqData}
-	this.run(3, 5, countDown, control, singleChan, 10)
+	this.run(5, 10, countDown, control, singleChan, 15)
+	printTable()
 }

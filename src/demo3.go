@@ -22,8 +22,8 @@ const num = 5
 var et int64
 var st int64
 
-// var token3 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJnbGVuIiwianRpIjoiMTExMyIsImlzcyI6IjkiLCJzdWIiOiI1In0.ahell126w-DnIiiAGilvQettJ3IM1vUp-D06vkWDD7s"
-var reqUrl = "https://test-www.vipsroom.net/api/scene/convert/chips/start/work/list"
+// var token3 = "eyJhbGc"
+var reqUrl = "https://"
 var resTime int64
 var chanResTime chan int64
 var resTimeList []int64
@@ -61,7 +61,7 @@ var reqData = map[string]interface{}{
 	//"start_work_end_time":   time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 23, 59, 59, 0, time.Now().Location()).Unix(),
 }
 var headers = map[string]string{
-	"t": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJnbGVuIiwianRpIjoiMTExMyIsImlzcyI6IjkiLCJzdWIiOiI1In0.ahell126w-DnIiiAGilvQettJ3IM1vUp-D06vkWDD7s",
+	"t": "kpXVCJ9.eyJhdWQiOiJnbGV",
 }
 var transPort *http.Transport
 

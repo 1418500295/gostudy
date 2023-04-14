@@ -24,7 +24,7 @@ var et int64
 var st int64
 
 // var token3 = "eyJhbGc"
-var reqUrl = "https://test-www.vipsroom.net/api/scene/convert/chips/start/work/list"
+var reqUrl = "http"
 var resTime int64
 var chanResTime chan int64
 var resTimeList []int
@@ -85,17 +85,13 @@ type Requests struct {
 }
 
 var reqData = map[string]interface{}{
-	"club":                  5,
-	"member_code":           "",
-	"page":                  1,
-	"size":                  10,
-	"start_work_start_time": nil,
-	"start_work_end_time":   nil,
+	"cb":                  5,
+	"
 	//"start_work_start_time": time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.Now().Location()).Unix(),
 	//"start_work_end_time":   time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 23, 59, 59, 0, time.Now().Location()).Unix(),
 }
 var headers = map[string]string{
-	"t": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJnbGVuIiwianRpIjoiMTExMyIsImlzcyI6IjkiLCJzdWIiOiI1In0.ahell126w-DnIiiAGilvQettJ3IM1vUp-D06vkWDD7s",
+	"t": "eyJhbGci",
 }
 
 //var transPort *http.Transport

@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"runtime"
+	"sort"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -26,23 +27,55 @@ var st int64
 var reqUrl = "https://test-www.vipsroom.net/api/scene/convert/chips/start/work/list"
 var resTime int64
 var chanResTime chan int64
-var resTimeList []int64
-var rTimeChan = make(chan int64, 100000) //创建响应数据收集缓冲区
+var resTimeList []int
+var rTimeChan = make(chan int, 100000) //创建响应数据收集缓冲区
 var sucNum int64
 var failNum int64
 var lock sync.Mutex
 var useTime int64
+var avgSize int64
 
-func avgResTime(timeList []int64) float64 {
+func avgResTime(timeList []int) float64 {
 	sum := 0
 	if len(timeList) == 0 {
 		fmt.Println("列表数据为空")
 	} else {
 		for _, v := range timeList {
-			sum += int(v)
+			sum += v
 		}
 	}
 	return float64(sum) / float64(len(timeList))
+}
+func qps() float64 {
+	return num / (avgResTime(resTimeList) / 1000)
+}
+func maxRespTime(timeList []int) float64 {
+	max := timeList[0]
+	for _, index := range timeList {
+		if index > max {
+			max = index
+		}
+	}
+	return float64(max) / float64(1000)
+}
+func minRespTime(timeList []int) float64 {
+	min := timeList[0]
+	for _, index := range timeList {
+		if index < min {
+			min = index
+		}
+	}
+	return float64(min) / float64(1000)
+}
+func fiftyRespTime(timeList []int) float64 {
+	sort.Ints(timeList)
+	resSize := 0.5
+	return float64(timeList[int(float64(len(timeList))*resSize)-1]) / float64(1000)
+}
+func ninetyRespTime(timeList []int) float64 {
+	sort.Ints(timeList)
+	resSize := 0.9
+	return float64(timeList[int(float64(len(timeList))*resSize)-1]) / float64(1000)
 }
 
 type Requests struct {
@@ -52,12 +85,17 @@ type Requests struct {
 }
 
 var reqData = map[string]interface{}{
-	"1":                  5,
-	
-	
+	"club":                  5,
+	"member_code":           "",
+	"page":                  1,
+	"size":                  10,
+	"start_work_start_time": nil,
+	"start_work_end_time":   nil,
+	//"start_work_start_time": time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.Now().Location()).Unix(),
+	//"start_work_end_time":   time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 23, 59, 59, 0, time.Now().Location()).Unix(),
 }
 var headers = map[string]string{
-	"t": "",
+	"t": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJnbGVuIiwianRpIjoiMTExMyIsImlzcyI6IjkiLCJzdWIiOiI1In0.ahell126w-DnIiiAGilvQettJ3IM1vUp-D06vkWDD7s",
 }
 
 //var transPort *http.Transport
@@ -65,9 +103,10 @@ var headers = map[string]string{
 //var req  *HttpRequest.Request
 var cli = &http.Client{Transport: &http.Transport{
 	MaxIdleConns:        10000, // Set your desired maximum number of idle connections
-	MaxIdleConnsPerHost: 1000,
+	MaxIdleConnsPerHost: 10000,
 	IdleConnTimeout:     30 * time.Second, // Set your desired idle connection timeout
 	DisableCompression:  true,             // Optional: Disable compression for testing purposes
+	DisableKeepAlives:   false,            //复用连接
 }}
 
 func getData() *bytes.Reader {
@@ -96,7 +135,8 @@ func (requests *Requests) execute(i int, times int64) {
 		res, _ := cli.Do(req)
 		e := time.Now().UnixNano() / 1e6
 		body, _ := ioutil.ReadAll(res.Body)
-		rTimeChan <- e - s
+		avgSize = req.ContentLength
+		rTimeChan <- int(e - s)
 		//lock.Lock()
 		//resTimeList = append(resTimeList, resTime)
 		//lock.Unlock()
@@ -173,7 +213,8 @@ func (requests *Requests) run(num int, executeTimes int64, countDown *sync.WaitG
 }
 
 func printTable() {
-	table, err := gotable.Create("耗时", "总并发数", "成功的请求数", "失败的请求数", "平均响应时间")
+	table, err := gotable.Create("耗时", "并发数", "成功的请求数",
+		"失败的请求数", "平均响应时间", "50%响应时间", "90%响应时间", "最大响应时间", "最小响应时间", "平均请求字节数", "qps")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -182,12 +223,18 @@ func printTable() {
 		strconv.Itoa(num), strconv.FormatInt(sucNum, 10),
 		strconv.FormatInt(failNum, 10),
 		fmt.Sprintf("%.3f", avgResTime(resTimeList)/1000),
+		fmt.Sprintf("%.3f", fiftyRespTime(resTimeList)),
+		fmt.Sprintf("%.3f", ninetyRespTime(resTimeList)),
+		fmt.Sprintf("%.3f", maxRespTime(resTimeList)),
+		fmt.Sprintf("%.3f", minRespTime(resTimeList)),
+		strconv.FormatInt(avgSize, 10),
+		fmt.Sprintf("%.3f", qps()),
 	})
 	fmt.Println(table)
 
 }
 func main() {
-	//fmt.Println(utils.Md5ToStr(""))
+	//fmt.Println(utils.Md5ToStr("OK6802"))
 	countDown := &sync.WaitGroup{}
 	control := &sync.WaitGroup{}
 	singleChan := make(chan struct{})

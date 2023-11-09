@@ -5,6 +5,30 @@ import (
 	"runtime"
 )
 
+
+
+b := make([]byte, 18)
+	defer func() {
+		err := recover()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}()
+	i := 0
+	for {
+		if i == 0 {
+			fmt.Println(idcardno.AutoCreate18IdCardNo())
+		} else {
+			fmt.Println("按回车键键继续：")
+			fmt.Scanf("%v", &b[i])
+			fmt.Println(idcardno.AutoCreate18IdCardNo())
+		}
+		i++
+	}
+
+
+
+
 func main() {
 	round := 5
 	var wg sync.WaitGroup
